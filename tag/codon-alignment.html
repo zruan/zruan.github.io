@@ -49,19 +49,19 @@ code into a forked biopython distribution in my
 I didn't pay much effort to the code organization as all of them
 are put into <tt class="docutils literal">__init__.py</tt>. Maybe when the code grows larger I
 need to make them more organized. The major class for <tt class="docutils literal">CodonAlign</tt>
-is <tt class="docutils literal">CodonAlignment</tt> class that inherits from <tt class="docutils literal">MultipleSeqAlignment</tt>.
+is <tt class="docutils literal">CodonAlignment</tt> that inherits from <tt class="docutils literal">MultipleSeqAlignment</tt>.
 I also defined a <tt class="docutils literal">CodonSeq</tt> class (from <tt class="docutils literal">Seq</tt>) to store sequence
-that is aligned based on codons. The main difference is the <tt class="docutils literal">__getitem__()</tt>
+that is aligned based on codons. The main difference is that the <tt class="docutils literal">__getitem__()</tt>
 method of <tt class="docutils literal">CodonSeq</tt> is codon slice (i.e. three nucleotides per slice,
 see below example). I also changed the <tt class="docutils literal">__str__()</tt>
-method so that it is more suitable to print a <tt class="docutils literal">CodonAlignment</tt>.
-Another thing I've done is the <tt class="docutils literal">build</tt> method, which accept a
-protein <tt class="docutils literal">MultipleSeqAlignment</tt> object and a set of SeqRecord of
-its corresponding nucleotide sequences to come up with a
-<tt class="docutils literal">CodonAlignment</tt>. The function now will translate the protein
-sequences into a long regular expression based on the user
+method so that it is more suitable to print a <tt class="docutils literal">CodonAlignment</tt> into the screen.
+Another thing I've done is the <tt class="docutils literal">build</tt> function, which accept a
+protein <tt class="docutils literal">MultipleSeqAlignment</tt> object and a set of corresponding
+nucleotide <tt class="docutils literal">SeqRecord</tt> to come up with a
+<tt class="docutils literal">CodonAlignment</tt>. Internally, the function will translate the protein
+sequences into a long regular expressions based on the user
 specified <tt class="docutils literal">CodonTable</tt> in biopython. It will then use the regualr
-expression to scan the nucleotide sequence to find a match.
+expression to scan the nucleotide sequence to find a span.
 No mismatch and frameshift is allowed right now in this step.
 Finally, a <tt class="docutils literal">CodonAlignment</tt> will be returned to the user for
 further manipulation.</p>
@@ -69,7 +69,7 @@ further manipulation.</p>
 <div class="section" id="some-examples">
 <h2>Some Examples</h2>
 <p>It is best to illustrate <tt class="docutils literal">CodonAlignment</tt> using simple examples.
-Here are some (assuming <cite>__init__.py</cite> and <cite>test_data</cite> are in your
+Here are some (assuming <tt class="docutils literal">__init__.py</tt> and <tt class="docutils literal">test_data</tt> are in your
 current python directory):</p>
 <p>1. Build a <tt class="docutils literal">CodonAlignment</tt> from Protein Alignment and Nucleotide
 Sequences. In the following example, <tt class="docutils literal">nucl_seq1</tt> is an iterator
@@ -130,7 +130,7 @@ nucleotide. Let's see the following example.</p>
 <span class="mi">185</span>
 </pre></div>
 <p>This example above is the basic usage of <tt class="docutils literal">CodonAlignment</tt>. If you
-have any suggestions or request some features are useful for codon
+have any suggestions or request some features that are useful for codon
 alignment please let me know.</p>
 </div>
 <div class="section" id="future-plan">
@@ -165,7 +165,14 @@ sequence is compatible.</p>
                 By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
         </address>
         <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
-<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a><a href="/tag/timeline.html">Timeline</a></p></footer><!-- /.post-info -->                <p>Timeline for GSoC</p>
+<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a><a href="/tag/timeline.html">Timeline</a></p></footer><!-- /.post-info -->                <p>This timeline is set up according to Karen Cranston's suggestion.
+I will update this page according to the progress of my current
+coding status. My original proposal also contains a draft
+timeline, which I will still generally follow. It can be found at
+<a href="https://google-melange.appspot.com/gsoc/proposal/review/google/gsoc2013/rzzmh12345/1">Melange</a>.</p>
+<h1>Detailed Timeline</h1>
+<h1>Week 1</h1>
+<h4>(June ...</h4>
                 <a class="readmore" href="/project-timeline.html">read more</a>
                 <p>There are <a href="/project-timeline.html#disqus_thread">comments</a>.</p>                </div><!-- /.entry-content -->
             </article></li>
