@@ -31,8 +31,142 @@
 
                             <aside id="featured" class="body">
                 <article>
-                    <h1 class="entry-title"><a href="/project-timeline.html">Project Timeline</a></h1> 
+                    <h1 class="entry-title"><a href="/1st-diary.html">1st Diary</a></h1> 
                     <footer class="post-info">
+        <abbr class="published" title="2013-06-20T14:32:00">
+                Thu 20 June 2013
+        </abbr>
+
+                <address class="vcard author">
+                By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
+        </address>
+        <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
+<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info --><p>construct codon alignment</p>
+<h1>Things have been done</h1>
+<p>In the first 4 days of GSoC, I successfully ported my existing
+code into a forked biopython distribution in my
+<a href="https://github.com/zruan/biopython/tree/master/Bio/CodonAlign">github</a>.
+I didn't pay much effort to the code organization as all of them
+are put into <code>__init__.py</code>. Maybe when the code grows larger I 
+need to make them more organized. The main class for codon
+alignment is CodonAlignment class that inherits from
+MultipleSeqAlignment. The main difference is the <code>__getitem__()</code>
+method, which in CodonAlignment is codon slice (i.e. three
+nucleotides per slice, see below). I also changed the <code>__str__()</code>
+method so that it is more suitable to print a CodonAlignment.
+Another thing I've done is the <code>build</code> method, which accept a
+protein MultipleSeqAlignment object and a set of SeqRecord of
+its corresponding nucleotide sequences to come up with a
+CodonAlignment. The function now will translate the protein
+sequences into a long regular expression based on the user
+specified CodonTable in biopython. It will then use the regualr
+expression to scan the nucleotide sequence to find a match.
+No mismatch and frameshift is allowed right now in this step.
+Finally, a CodonAlignment will be returned to the user for
+further manipulation.</p>
+<h1>Some Examples</h1>
+<p>It is best to illustrate CodonAlignment using simple examples.
+Here are some (assuming <strong>init</strong>.py and test_data/ are in your
+current python directory):</p>
+<ol>
+<li>
+<p>Build a CodonAlignment from Protein Alignment and Nucleotide 
+Sequences. In the following example, nucl_seq1 is an iterator
+returned by SeqIO.parse(). I assume the order of sequence
+records stored in prot_aln1 and nucl_seq1 are the same.
+    ```python
+    &gt;&gt;&gt; from Bio import SeqIO, AlignIO
+    &gt;&gt;&gt; from Bio.Alphabet import IUPAC
+    &gt;&gt;&gt; from <strong>init</strong> import build, default_alphabet
+    &gt;&gt;&gt; prot_aln1 = AlignIO.read('test_data/pro1.aln', 'clustal', alphabet=IUPAC.protein)
+    &gt;&gt;&gt; nucl_seq1 = SeqIO.parse('test_data/nucl1.fa', 'fasta', alphabet=default_alphabet)
+    &gt;&gt;&gt; codon_aln1 = build(prot_aln1, nucl_seq1)
+    &gt;&gt;&gt; print codon_aln1
+    CodonAlignment Object
+    HasStopCodon(Gapped(IUPACUnambiguousDNA(), '-'), '*') alignment with 3 rows and 555 columns (185 codons)
+    AGAGGCGATCAACGCAGCAACTTCCAGCTGTCTCCCTCCACCATGCAGATC...GGGGCATGC isotig69710
+    ------------------------------------------ATGAAAGTC...--------- ENSG00000108691:ENST00000580907
+    ------------------------------------------ATGAAAGTC...--------- ENSG00000108691:ENST00000225831</p>
+<p>```</p>
+</li>
+<li>
+<p>It is also possible to use SeqRecord dict read by 
+SeqIO.index() to build CodonAlignment. In this case, I assume 
+nucleotide SeqRecord and protein SeqRecord sharing the same 
+id are a match. e.g.
+    ```python
+    &gt;&gt;&gt; prot_aln2 = AlignIO.read('test_data/pro3.aln', 'clustal', alphabet=IUPAC.protein)
+    &gt;&gt;&gt; nucl_seq2 = SeqIO.index('test_data/nucl3.fa', 'fasta', alphabet=default_alphabet)
+    &gt;&gt;&gt; codon_aln2 = build(prot_aln2, nucl_seq2)
+    &gt;&gt;&gt; print codon_aln2
+    CodonAlignment Object
+    HasStopCodon(Gapped(IUPACUnambiguousDNA(), '-'), '*') alignment with 10 rows and 3366 columns (1122 codons)
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000300134
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000543873
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000556155
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000454075
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000538913
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000537215
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000535201
+    GAGGTTACTCAGAGTAGGAGGAAGCCGGTCAGAGAGGGCAGACCCTGGGAA...CTGCTTTGC isotig46679
+    ------------GCTAGGAGA------------------------------...--------- isotig12565
+    ------------GCTAGGAGA------------------------------...--------- isotig12566</p>
+<p>```
+3. Then let's look at the SeqRecord in CodonAlignment. The
+CodonSeq object stored in it is a bit different from normal Seq 
+Object. The main difference it that it is sliced by codon not
+nucleotide. Let's see the following example.</p>
+<p>```python</p>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>codon_record = codon_aln1[0]
+print codon_record
+SeqRecord(seq=CodonSeq('AGAGGCGATCAACGCAGCAACTTCCAGCTGTCTCCCTCCACCATGCAGATCTCC...TGC', Gapped(HasStopCodon(IUPACUnambiguousDNA(), '<em>'), '-')), id='isotig69710', name='<unknown name>', description='<unknown description>', dbxrefs=[])
+codon_record.seq
+CodonSeq('AGAGGCGATCAACGCAGCAACTTCCAGCTGTCTCCCTCCACCATGCAGATCTCC...TGC', Gapped(HasStopCodon(IUPACUnambiguousDNA(), '</em>'), '-'))
+print codon_record.seq.<strong>class</strong>.<strong>name</strong>
+CodonSeq
+print codon_record.seq[0]
+AGA
+print codon_record.seq[:3]
+AGAGGCGAT
+print codon_record.seq[-3:]
+GGGGCATGC
+codon_record.seq.get_codon_num()
+185</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>```</p>
+</li>
+</ol>
+<p>This example above is the basic usage of CodonAlignment. If you
+have any suggestions or request some features are useful for codon
+alignment please let me know.</p>
+<h1>Future Plan</h1>
+<ol>
+<li>Automatically generate an alphabet from user specified 
+CodonTable. And check the CodonSeq to see if the alphabet in the
+sequence is compatible.</li>
+</ol>
+<p>For more info, please visit my
+<a href="https://github.com/zruan/biopython/tree/master/Bio/CodonAlign">codonAlign github repo</a></p><p>There are <a href="/1st-diary.html#disqus_thread">comments</a>.</p>                </article>
+                            </aside><!-- /#featured -->
+                            <section id="content" class="body">
+                    <h1>Other articles</h1>
+                    <hr />
+                    <ol id="posts-list" class="hfeed">
+                                                        
+
+                 
+                        <li><article class="hentry">    
+                <header>
+                        <h1><a href="/project-timeline.html" rel="bookmark" title="Permalink to Project Timeline">Project Timeline</a></h1>
+                </header>
+                
+                <div class="entry-content">
+                <footer class="post-info">
         <abbr class="published" title="2013-06-14T15:24:00">
                 Fri 14 June 2013
         </abbr>
@@ -41,71 +175,11 @@
                 By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
         </address>
         <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
-<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a><a href="/tag/timeline.html">Timeline</a></p></footer><!-- /.post-info --><p>This timeline is set up according to Karen Cranston's suggestion.
-I will update this page according to the progress of my current
-coding status. My original proposal also contains a draft
-timeline, which I will still generally follow. It can be found at
-<a href="https://google-melange.appspot.com/gsoc/proposal/review/google/gsoc2013/rzzmh12345/1">Melange</a>.</p>
-<h1>Detailed Timeline</h1>
-<h1>Week 1</h1>
-<h4>(June 17 -- June 23)</h4>
-<ul>
-<li><strong>Goal</strong> Set up the framework of codon alignment in biopython</li>
-<li><strong>Tasks</strong><ol>
-<li>Write a CodonAlignment class that inherits from MultipleSeqAlignment class of Biopython;</li>
-<li>Adapt my existing CodonAlign functionality into CodonAlignment object;</li>
-<li>Replace my own codon table with Biopython codon tables;</li>
-<li>Wisely match DNA sequences and protein sequences while constructing codon alignment;</li>
-<li>Speed up the existing implementation.</li>
-</ol>
-</li>
-</ul>
-<h1>Week 2</h1>
-<h4>(June 24 -- June 30)</h4>
-<ul>
-<li><strong>Goal</strong> Support mismatches between DNA sequences and AA alignment</li>
-<li><strong>Tasks</strong><ol>
-<li>Write a function to find the discrepancies between a given protein sequence and 
-    coding DNA sequence (Check all reading frames);</li>
-<li>Add mismatch tolerance option when build codon alignment (this involves scoring);</li>
-<li>If failed to build codon alignment in any way, raise an error indicating differences.</li>
-<li>If SeqRecord contain annotation, try to use that information to build alignment.</li>
-</ol>
-</li>
-</ul>
-<h1>Week 3</h1>
-<h4>(July 1 -- July 7)</h4>
-<ul>
-<li><strong>Goal</strong> Support frameshift of DNA translation</li>
-<li><strong>Tasks</strong><ol>
-<li>Write a function to find the frameshift between a given protein sequence and 
-    coding DNA sequence;</li>
-<li>Add frameshift tolerance option when build codon alignment (this also involves scoring);</li>
-<li>If failed to build codon alignment in any way, raise an error indicating differences.</li>
-<li>If SeqRecord contain annotation, try to use that information to build alignment.</li>
-</ol>
-</li>
-</ul>
-<h1>Week 4</h1>
-<h4>(July 8 -- July 17)</h4>
-<ul>
-<li><strong>Goal</strong> Make codon alignment functionality capable of dealing with both mismatches and frameshift</li>
-<li><strong>Tasks</strong><ol>
-<li>Write a function to unify mismatch detection and frameshift detection, whichever is more likely;</li>
-<li>Unify mismatch-frameshift tolerance option when build codon alignment (this involves scoring);</li>
-<li>If failed to build codon alignment in any way, raise an error indicating differences.</li>
-</ol>
-</li>
-</ul>
-<h2>Plans for Following Weeks will Come Soon</h2>
-<p>Any suggestions are welcome. For the project source code, please visit my
-<a href="http://github.com/zruan/CodonAlign">codonAlign github repo</a>.</p><p>There are <a href="/project-timeline.html#disqus_thread">comments</a>.</p>                </article>
-                            </aside><!-- /#featured -->
-                            <section id="content" class="body">
-                    <h1>Other articles</h1>
-                    <hr />
-                    <ol id="posts-list" class="hfeed">
-                                                        
+<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a><a href="/tag/timeline.html">Timeline</a></p></footer><!-- /.post-info -->                <p>Timeline for GSoC</p>
+                <a class="readmore" href="/project-timeline.html">read more</a>
+                <p>There are <a href="/project-timeline.html#disqus_thread">comments</a>.</p>                </div><!-- /.entry-content -->
+            </article></li>
+                                    
 
                  
                         <li><article class="hentry">    

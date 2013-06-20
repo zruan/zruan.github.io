@@ -31,8 +31,142 @@
 
                             <aside id="featured" class="body">
                 <article>
-                    <h1 class="entry-title"><a href="/blog-motivation.html">Motivation for the Blog</a></h1> 
+                    <h1 class="entry-title"><a href="/1st-diary.html">1st Diary</a></h1> 
                     <footer class="post-info">
+        <abbr class="published" title="2013-06-20T14:32:00">
+                Thu 20 June 2013
+        </abbr>
+
+                <address class="vcard author">
+                By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
+        </address>
+        <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
+<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info --><p>construct codon alignment</p>
+<h1>Things have been done</h1>
+<p>In the first 4 days of GSoC, I successfully ported my existing
+code into a forked biopython distribution in my
+<a href="https://github.com/zruan/biopython/tree/master/Bio/CodonAlign">github</a>.
+I didn't pay much effort to the code organization as all of them
+are put into <code>__init__.py</code>. Maybe when the code grows larger I 
+need to make them more organized. The main class for codon
+alignment is CodonAlignment class that inherits from
+MultipleSeqAlignment. The main difference is the <code>__getitem__()</code>
+method, which in CodonAlignment is codon slice (i.e. three
+nucleotides per slice, see below). I also changed the <code>__str__()</code>
+method so that it is more suitable to print a CodonAlignment.
+Another thing I've done is the <code>build</code> method, which accept a
+protein MultipleSeqAlignment object and a set of SeqRecord of
+its corresponding nucleotide sequences to come up with a
+CodonAlignment. The function now will translate the protein
+sequences into a long regular expression based on the user
+specified CodonTable in biopython. It will then use the regualr
+expression to scan the nucleotide sequence to find a match.
+No mismatch and frameshift is allowed right now in this step.
+Finally, a CodonAlignment will be returned to the user for
+further manipulation.</p>
+<h1>Some Examples</h1>
+<p>It is best to illustrate CodonAlignment using simple examples.
+Here are some (assuming <strong>init</strong>.py and test_data/ are in your
+current python directory):</p>
+<ol>
+<li>
+<p>Build a CodonAlignment from Protein Alignment and Nucleotide 
+Sequences. In the following example, nucl_seq1 is an iterator
+returned by SeqIO.parse(). I assume the order of sequence
+records stored in prot_aln1 and nucl_seq1 are the same.
+    ```python
+    &gt;&gt;&gt; from Bio import SeqIO, AlignIO
+    &gt;&gt;&gt; from Bio.Alphabet import IUPAC
+    &gt;&gt;&gt; from <strong>init</strong> import build, default_alphabet
+    &gt;&gt;&gt; prot_aln1 = AlignIO.read('test_data/pro1.aln', 'clustal', alphabet=IUPAC.protein)
+    &gt;&gt;&gt; nucl_seq1 = SeqIO.parse('test_data/nucl1.fa', 'fasta', alphabet=default_alphabet)
+    &gt;&gt;&gt; codon_aln1 = build(prot_aln1, nucl_seq1)
+    &gt;&gt;&gt; print codon_aln1
+    CodonAlignment Object
+    HasStopCodon(Gapped(IUPACUnambiguousDNA(), '-'), '*') alignment with 3 rows and 555 columns (185 codons)
+    AGAGGCGATCAACGCAGCAACTTCCAGCTGTCTCCCTCCACCATGCAGATC...GGGGCATGC isotig69710
+    ------------------------------------------ATGAAAGTC...--------- ENSG00000108691:ENST00000580907
+    ------------------------------------------ATGAAAGTC...--------- ENSG00000108691:ENST00000225831</p>
+<p>```</p>
+</li>
+<li>
+<p>It is also possible to use SeqRecord dict read by 
+SeqIO.index() to build CodonAlignment. In this case, I assume 
+nucleotide SeqRecord and protein SeqRecord sharing the same 
+id are a match. e.g.
+    ```python
+    &gt;&gt;&gt; prot_aln2 = AlignIO.read('test_data/pro3.aln', 'clustal', alphabet=IUPAC.protein)
+    &gt;&gt;&gt; nucl_seq2 = SeqIO.index('test_data/nucl3.fa', 'fasta', alphabet=default_alphabet)
+    &gt;&gt;&gt; codon_aln2 = build(prot_aln2, nucl_seq2)
+    &gt;&gt;&gt; print codon_aln2
+    CodonAlignment Object
+    HasStopCodon(Gapped(IUPACUnambiguousDNA(), '-'), '*') alignment with 10 rows and 3366 columns (1122 codons)
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000300134
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000543873
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000556155
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000454075
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000538913
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000537215
+    ---------------------------------------------------...CCCAGTTGG ENSG00000166888:ENST00000535201
+    GAGGTTACTCAGAGTAGGAGGAAGCCGGTCAGAGAGGGCAGACCCTGGGAA...CTGCTTTGC isotig46679
+    ------------GCTAGGAGA------------------------------...--------- isotig12565
+    ------------GCTAGGAGA------------------------------...--------- isotig12566</p>
+<p>```
+3. Then let's look at the SeqRecord in CodonAlignment. The
+CodonSeq object stored in it is a bit different from normal Seq 
+Object. The main difference it that it is sliced by codon not
+nucleotide. Let's see the following example.</p>
+<p>```python</p>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>codon_record = codon_aln1[0]
+print codon_record
+SeqRecord(seq=CodonSeq('AGAGGCGATCAACGCAGCAACTTCCAGCTGTCTCCCTCCACCATGCAGATCTCC...TGC', Gapped(HasStopCodon(IUPACUnambiguousDNA(), '<em>'), '-')), id='isotig69710', name='<unknown name>', description='<unknown description>', dbxrefs=[])
+codon_record.seq
+CodonSeq('AGAGGCGATCAACGCAGCAACTTCCAGCTGTCTCCCTCCACCATGCAGATCTCC...TGC', Gapped(HasStopCodon(IUPACUnambiguousDNA(), '</em>'), '-'))
+print codon_record.seq.<strong>class</strong>.<strong>name</strong>
+CodonSeq
+print codon_record.seq[0]
+AGA
+print codon_record.seq[:3]
+AGAGGCGAT
+print codon_record.seq[-3:]
+GGGGCATGC
+codon_record.seq.get_codon_num()
+185</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>```</p>
+</li>
+</ol>
+<p>This example above is the basic usage of CodonAlignment. If you
+have any suggestions or request some features are useful for codon
+alignment please let me know.</p>
+<h1>Future Plan</h1>
+<ol>
+<li>Automatically generate an alphabet from user specified 
+CodonTable. And check the CodonSeq to see if the alphabet in the
+sequence is compatible.</li>
+</ol>
+<p>For more info, please visit my
+<a href="https://github.com/zruan/biopython/tree/master/Bio/CodonAlign">codonAlign github repo</a></p><p>There are <a href="/1st-diary.html#disqus_thread">comments</a>.</p>                </article>
+                            </aside><!-- /#featured -->
+                            <section id="content" class="body">
+                    <h1>Other articles</h1>
+                    <hr />
+                    <ol id="posts-list" class="hfeed">
+                                                        
+
+                 
+                        <li><article class="hentry">    
+                <header>
+                        <h1><a href="/blog-motivation.html" rel="bookmark" title="Permalink to Motivation for the Blog">Motivation for the Blog</a></h1>
+                </header>
+                
+                <div class="entry-content">
+                <footer class="post-info">
         <abbr class="published" title="2013-06-03T23:33:00">
                 Mon 03 June 2013
         </abbr>
@@ -41,24 +175,15 @@
                 By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
         </address>
         <p>In <a href="/category/me.html">Me</a>. </p>
-<p>tags: <a href="/tag/motivation.html">motivation</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info --><p>Originally, I plan to use google blogger system for my GSoC
+<p>tags: <a href="/tag/motivation.html">motivation</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info -->                <p>Originally, I plan to use google blogger system for my GSoC
 Home Page, as Peter Cock suggested. However, I learnt from
 Yanbo Ye that github also support static blog system. I then
 spent a day to play with it and finally got the basic way to
-set it up. <a href="http://docs.getpelican.com/en/3.2/">Pelican</a>
-is different from CMS like wordpress, drupal and django as
-it focus on translate many text-to-html language, thus
-faciliate blogging. I like this idea as html is too
-cumbersome to work with. With some adjustment of them
-template (google fonts and some css element), the blog now
-looks fine and hope it will be a good start!</p>
-<p>Zheng Ruan</p><p>There are <a href="/blog-motivation.html#disqus_thread">comments</a>.</p>                </article>
-                            </aside><!-- /#featured -->
-                            <section id="content" class="body">
-                    <h1>Other articles</h1>
-                    <hr />
-                    <ol id="posts-list" class="hfeed">
-                                                        
+set it up. <a href="http://docs.getpelican.com/en/3.2/">Pelican ...</a></p>
+                <a class="readmore" href="/blog-motivation.html">read more</a>
+                <p>There are <a href="/blog-motivation.html#disqus_thread">comments</a>.</p>                </div><!-- /.entry-content -->
+            </article></li>
+                                    
 
                  
                         <li><article class="hentry">    
