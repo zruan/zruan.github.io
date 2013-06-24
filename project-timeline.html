@@ -22,8 +22,9 @@
         <header id="banner" class="body">
                 <h1><a href="/index.html">Codon Alignment GSoC Homepage </a></h1>
                 <nav><ul>
-                                                                                                    <li class="active"><a href="/category/gsoc.html">GSoC</a></li>
+                                                                                                    <li ><a href="/category/gsoc.html">GSoC</a></li>
                                     <li ><a href="/category/me.html">Me</a></li>
+                                    <li class="active"><a href="/category/timeline.html">Timeline</a></li>
                                 </ul></nav>
         </header><!-- /#banner -->
         <section id="content" class="body">
@@ -36,15 +37,15 @@
 
     <div class="entry-content">
       <footer class="post-info">
-        <abbr class="published" title="2013-06-14T15:24:00">
-                Fri 14 June 2013
+        <abbr class="published" title="2013-06-24T10:47:00">
+                Mon 24 June 2013
         </abbr>
 
                 <address class="vcard author">
                 By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
         </address>
-        <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
-<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a><a href="/tag/timeline.html">Timeline</a></p></footer><!-- /.post-info -->      <p>This timeline is set up according to Karen Cranston's suggestion.
+        <p>In <a href="/category/timeline.html">Timeline</a>. </p>
+<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a><a href="/tag/timeline.html">Timeline</a><a href="/tag/plan.html">Plan</a></p></footer><!-- /.post-info -->      <p>This timeline is set up according to Karen Cranston's suggestion.
 I will update this page according to the progress of my current
 coding status and suggestions from others. My original proposal also contains a draft
 timeline, which I will still generally follow. It can be found at
@@ -65,6 +66,15 @@ help me successfully finish the project!</p>
 </ol>
 </li>
 </ul>
+<p>All the 5 items listed above have been finished last week. In terms of item 5, I hardly pays
+any effort as I assume the protein sequences can be exactly translated by DNA sequences. The
+speed is more of a concern if I am dealing with mismatch and frameshift while building the
+alignment. Therefore, this will be a long term task (at least for several weeks). Another
+things I need to mention is that I've written a CodonSeq class to store sequences in
+CodonAlignment. Peter seemed not very favor of such a concept. I'm not sure if I need to
+return to the Seq class since codon sequences have much unique properties compared with
+normal Seq. I also implemented a codon alphabet to check the CodonSeq sequences, which is
+not in the original plan. </p>
 <h1>Week 2</h1>
 <h4>(June 24 -- June 30)</h4>
 <ul>
@@ -75,6 +85,7 @@ help me successfully finish the project!</p>
 <li>Add mismatch tolerance option when build codon alignment (this involves scoring);</li>
 <li>If failed to build codon alignment in any way, raise an error indicating differences.</li>
 <li>If SeqRecord contain annotation, try to use that information to build alignment.</li>
+<li>Speed up the existing implementation.</li>
 </ol>
 </li>
 </ul>
