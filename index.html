@@ -47,25 +47,25 @@
 <p>This week I finished the mismatch support for codon alignment
 construction. The underlying algorithms is very similar to that
 implemented in <a class="reference external" href="http://www.ncbi.nlm.nih.gov/pubmed/16845082">pal2nal</a>.
-Specifically, if whole protein translated codon re failed to find a hit
-in the nucleotide sequences, small 10 amino acids anchors are used to
+Specifically, if the whole protein translated codon re failed to find a hit
+in the nucleotide sequence, small 10 amino acids anchor is used to
 scan it individually. Unmatched anchors are represented as
 <tt class="docutils literal"><span class="pre">'...'</span> * anchor_len</tt> in the re. The program then use the concatenated
 anchor expression to scan the whole nucleotide sequence. If this time,
 a match is found, it will read through the nucleotide sequence according
 to the match span and figure out which positions are not matched. Warning
 will raise up for unmatched positions. Another thing I've done is adding
-the <cite>corr_dict</cite> option for <cite>AlignIO.build</cite> method. This optional
+the <tt class="docutils literal">corr_dict</tt> option for <tt class="docutils literal">AlignIO.build</tt> method. This optional
 argument will accept a <cite>dict</cite> object that tells the id correspondance
 between protein sequence records and nucleotide records. For the IO
-support, because of the codon slice in <cite>CodonSeq</cite>, CodonAlignment
-will not be correctly written using normal <cite>AlignIO.write</cite>. Therefore,
-I wrote a <cite>toMultipleSeqAlignment()</cite> method in <cite>CodonAlignment</cite>. As its
-name indicated, it will return a <cite>MultipleSeqAlignment</cite> object with
-<cite>Seq</cite> to store sequences. The user can the write out their codon
-alignment into any format supported by <cite>AlignIO</cite>. Finally, I also set
-up a test for <cite>CodonAlign</cite> module. It is named <cite>test_CodonAlignment</cite>
-in <cite>Tests</cite> directory. Some warnings will raise up because the example
+support, because of the codon slice in <tt class="docutils literal">CodonSeq</tt>, <tt class="docutils literal">CodonAlignment</tt>
+will not be correctly written using normal <tt class="docutils literal"><span class="pre">AlignIO.writ()e</span></tt>. Therefore,
+I wrote a <tt class="docutils literal">toMultipleSeqAlignment()</tt> method in <tt class="docutils literal">CodonAlignment</tt>. As its
+name indicated, it will return a <tt class="docutils literal">MultipleSeqAlignment</tt> object with
+<tt class="docutils literal">Seq</tt> to store sequences. The user can the write out their codon
+alignment into any format supported by <tt class="docutils literal">AlignIO</tt>. Finally, I also set
+up a test for <tt class="docutils literal">CodonAlign</tt> module. It is named <tt class="docutils literal">test_CodonAlignment</tt>
+in <tt class="docutils literal">Tests</tt> directory. Some warnings will raise up because the example
 sequences contains mismatches.</p>
 </div>
 <div class="section" id="some-examples">
