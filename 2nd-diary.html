@@ -93,7 +93,7 @@ Sequences when some of the sites are incompatible.</p>
 <span class="o">------------------------------------------</span><span class="n">ATGAAAGTC</span><span class="o">...------</span> <span class="n">ENSG00000108691</span><span class="p">:</span><span class="n">ENST00000225831</span>
 </pre></div>
 <ol class="arabic simple" start="2">
-<li>I will then illustrate how to use <cite>id</cite> option to set up the
+<li>I will then illustrate how to use <tt class="docutils literal">id</tt> option to set up the
 correspondance between nucleotide records and protein records.</li>
 </ol>
 <div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">nucls</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;test_data/egfr_nucl.fa&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
@@ -113,8 +113,8 @@ correspondance between nucleotide records and protein records.</li>
 </pre></div>
 <ol class="arabic simple" start="3">
 <li>To write out a constructed codon alignment, you need to first
-convert it into a <cite>MultipleSeqAlignment</cite> object and then use
-the functions in <cite>AlignIO</cite> to write out. Here is an example:</li>
+convert it into a <tt class="docutils literal">MultipleSeqAlignment</tt> object and then use
+the functions in <tt class="docutils literal">AlignIO</tt> to write out. Here is an example:</li>
 </ol>
 <div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">AlignIO</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">codonaln</span><span class="p">,</span> <span class="s">&#39;ex.clw&#39;</span><span class="p">,</span> <span class="s">&#39;clustal&#39;</span><span class="p">)</span>
 <span class="c"># If you open the ex.clw file, it is not properly formated.</span>
@@ -130,7 +130,7 @@ alignment please let me know.</p>
 <div class="section" id="future-plan">
 <h2>Future Plan</h2>
 <ol class="arabic simple">
-<li>Allow frameshift in the <cite>AlignIO.build</cite> method.</li>
+<li>Allow frameshift in the <tt class="docutils literal">AlignIO.build</tt> method.</li>
 <li>Reorganize the code into different files.</li>
 </ol>
 <p>For more info, please visit my
