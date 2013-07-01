@@ -89,6 +89,14 @@ not in the original plan. </p>
 </ol>
 </li>
 </ul>
+<p>In week 2, I implemented most of the plan above. Mismatch is allowed with a high
+tolerance. I didn't set up a threshold for the number of mismatches allowed. In
+theory, the algorithm will allow a protein sequence with all mismatches in frame
+to be aligned. This might be undesirable, therefore, I plan to add a default
+threshold for mismatch and report an warning when exceed it. The item 4 has not
+been touched yet as I may need a special week to take over this part. I also
+wrote a test for the existing code. For detailed information, please visit my
+project diary for week 2.</p>
 <h1>Week 3</h1>
 <h4>(July 1 -- July 7)</h4>
 <ul>
@@ -98,7 +106,7 @@ not in the original plan. </p>
     coding DNA sequence;</li>
 <li>Add frameshift tolerance option when build codon alignment (this also involves scoring);</li>
 <li>If failed to build codon alignment in any way, raise an error indicating differences.</li>
-<li>If SeqRecord contain annotation, try to use that information to build alignment.</li>
+<li>Reorganize the existing code.</li>
 </ol>
 </li>
 </ul>
@@ -112,6 +120,12 @@ not in the original plan. </p>
 <li>If failed to build codon alignment in any way, raise an error indicating differences.</li>
 </ol>
 </li>
+</ul>
+<h1>Week 5</h1>
+<h4>(July 8 -- July 14)</h4>
+<ul>
+<li><strong>Goal</strong> Take advantage of the annotation information in SeqRecord to help
+           construct codon alignment</li>
 </ul>
 <h2>Plans for Following Weeks will Come Soon</h2>
 <p>Any suggestions are welcome. For the project source code, please visit my
