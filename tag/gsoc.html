@@ -45,24 +45,26 @@
 <p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info --><div class="section" id="things-have-been-done">
 <h2>Things have been done</h2>
 <p>In the last two weeks I was trying the implement frameshift support
-in Bio.CodonAlign module. This is a new function compared with
+in <tt class="docutils literal">Bio.CodonAlign</tt> module. This is a new function compared with
 <tt class="docutils literal">pal2nal</tt> as I'm trying to account for frameshift from scratch.
 It is much more difficult than I imagine. First I need to adjust
 <tt class="docutils literal">CodonSeq</tt> class to accommodate a way to translate nucleotide
 sequence by user specified reading frame (this must have enough
 flexibility). I then need to find where the frameshift event
 occurrs based on given protein sequence and nucleotide sequence.
-After thinking about the two questions above and coding. I now
-have a naive implementation that can deal with forward frameshift.</p>
+After thinking about the two questions above and coding, I now
+have a naive implementation that can deal with forward frameshift.
+I will further make my code more robust and fix bugs that
+potentially exit.</p>
 <p>In <tt class="docutils literal">CodonSeq</tt>, I added a attribute called <tt class="docutils literal">rf_table</tt> which
-accepts a list or tuple that specify the start position of each
+accepts a list or tuple that specifies the start position of each
 codon along the sequence. For example, <tt class="docutils literal">'AAACCGGG'</tt> when applied
 with a rf_table <tt class="docutils literal">[0, 3, 5]</tt> will be translated into <tt class="docutils literal">KPG</tt>,
 efficiently accounting for any frameshift. I will further
 demonstrate this way of usage of CodonSeq in the following example.</p>
-<p>Forward frameshift, which skips several nucleotides in translation
-and backward frameshift, whick reuses several nucleotides in
-translation is different in that I need to adjust gaps in different
+<p>Forward frameshift, which skips several nucleotides in translation,
+and backward frameshift, which reuses several nucleotides in
+translation, are different in that I need to adjust gaps in different
 ways to come up with the final alignment. Technically, forward
 frameshift is harder as when this kind of frameshift occurrs, gaps
 should be added to all the other records. Current implementation can
