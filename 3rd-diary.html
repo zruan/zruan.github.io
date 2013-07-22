@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>3rd Diary</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="/theme/css/main.css" type="text/css" />
+   
+
+        <!--[if IE]>
+                <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!--[if lte IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie.css"/>
+                <script src="/js/IE8.js" type="text/javascript"></script><![endif]-->
+
+        <!--[if lt IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie6.css"/><![endif]-->
+
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/index.html">Codon Alignment GSoC Homepage </a></h1>
+                <nav><ul>
+                                                                                                    <li class="active"><a href="/category/gsoc.html">GSoC</a></li>
+                                    <li ><a href="/category/me.html">Me</a></li>
+                                    <li ><a href="/category/timeline.html">Timeline</a></li>
+                                </ul></nav>
+        </header><!-- /#banner -->
+        <section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="3rd-diary.html" rel="bookmark"
+           title="Permalink to 3rd Diary">3rd Diary</a></h1>
+          </header>
+
+    <div class="entry-content">
+      <footer class="post-info">
+        <abbr class="published" title="2013-07-14T10:29:00">
+                Sun 14 July 2013
+        </abbr>
+
+                <address class="vcard author">
+                By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
+        </address>
+        <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
+<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info -->      <div class="section" id="things-have-been-done">
+<h2>Things have been done</h2>
+<p>In the last two weeks I was trying the implement frameshift support
+in <tt class="docutils literal">Bio.CodonAlign</tt> module. This is a new function compared with
+<tt class="docutils literal">pal2nal</tt> as I'm trying to account for frameshift from scratch.
+It is much more difficult than I imagine. First I need to adjust
+<tt class="docutils literal">CodonSeq</tt> class to accommodate a way to translate nucleotide
+sequence by user specified reading frame (this must have enough
+flexibility). I then need to find where the frameshift event
+occurrs based on given protein sequence and nucleotide sequence.
+After thinking about the two questions above and coding, I now
+have a naive implementation that can deal with forward frameshift.
+I will further make my code more robust and fix bugs that
+potentially exit.</p>
+<p>In <tt class="docutils literal">CodonSeq</tt>, I added a attribute called <tt class="docutils literal">rf_table</tt> which
+accepts a list or tuple that specifies the start position of each
+codon along the sequence. For example, <tt class="docutils literal">'AAACCGGG'</tt> when applied
+with a rf_table <tt class="docutils literal">[0, 3, 5]</tt> will be translated into <tt class="docutils literal">KPG</tt>,
+efficiently accounting for any frameshift. I will further
+demonstrate this way of usage of CodonSeq in the following example.</p>
+<p>Forward frameshift, which skips several nucleotides in translation,
+and backward frameshift, which reuses several nucleotides in
+translation, are different in that I need to adjust gaps in different
+ways to come up with the final alignment. Technically, forward
+frameshift is harder as when this kind of frameshift occurrs, gaps
+should be added to all the other records. Current implementation can
+deal with this occasion.</p>
+</div>
+<div class="section" id="some-examples">
+<h2>Some Examples</h2>
+<p>I first demonstrate the newly added method in CodonSeq and then how
+to get codon alignment with frameshift.</p>
+<ol class="arabic simple">
+<li>Translation with frameshift.</li>
+</ol>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">__init__</span> <span class="kn">import</span> <span class="n">CodonSeq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">codonseq</span> <span class="o">=</span> <span class="n">CodonSeq</span><span class="p">(</span><span class="s">&#39;AAATTTCCCGGG&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">translate</span><span class="p">()</span>
+<span class="n">KFPG</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">codonseq</span> <span class="o">=</span> <span class="n">CodonSeq</span><span class="p">(</span><span class="s">&#39;AAATTTCCCGGG&#39;</span><span class="p">,</span> <span class="n">rf_table</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">9</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">translate</span><span class="p">()</span>
+<span class="n">KFPG</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">codonseq</span> <span class="o">=</span> <span class="n">CodonSeq</span><span class="p">(</span><span class="s">&#39;AAATTTCCCGG&#39;</span><span class="p">,</span>  <span class="n">rf_table</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">8</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">translate</span><span class="p">()</span>
+<span class="n">KFPR</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">codonseq</span> <span class="o">=</span> <span class="n">CodonSeq</span><span class="p">(</span><span class="s">&#39;AAATTTCCCAGGG&#39;</span><span class="p">,</span><span class="n">rf_table</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">translate</span><span class="p">()</span>
+<span class="n">KFPG</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">codonseq</span> <span class="o">=</span> <span class="n">CodonSeq</span><span class="p">(</span><span class="s">&#39;AAATTTCCCGG&#39;</span><span class="p">,</span>  <span class="n">rf_table</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">9</span><span class="p">])</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+  <span class="n">File</span> <span class="s">&quot;&lt;stdin&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+  <span class="n">File</span> <span class="s">&quot;__init__.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">140</span><span class="p">,</span> <span class="ow">in</span> <span class="n">__init__</span>
+    <span class="o">%</span> <span class="n">seq_ungapped</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">])</span>
+<span class="ne">ValueError</span><span class="p">:</span> <span class="n">Sequence</span> <span class="n">contain</span> <span class="n">undefined</span> <span class="n">letters</span> <span class="kn">from</span> <span class="nn">alphabet</span> <span class="p">(</span><span class="n">GG</span><span class="p">)</span><span class="err">!</span>
+</pre></div>
+<p>The example above shows how to use <tt class="docutils literal">rf_table</tt> to accommodate frameshift
+(both forward frameshift and backward frameshift). The program will
+automatically read three letters after each position in <tt class="docutils literal">rf_table</tt> to
+apply translation. If rf_table is not specified, no frameshift is
+assumed and rf_table will be constructed automatically. If it is
+speficied, it is the user's responsibility to ensure the correctness.
+The program will report unrecognized codon alphabet as a <tt class="docutils literal">ValueError</tt>.</p>
+<ol class="arabic simple" start="2">
+<li>Another thing about <tt class="docutils literal">rf_table</tt> is that it is independent of the gaps
+in the sequences. This makes <tt class="docutils literal">rf_table</tt> to be interchangeable. If
+you want to have a <tt class="docutils literal">rf_table</tt> that accounts for the gap position,
+you can try <tt class="docutils literal">get_full_rf_table()</tt> method of <tt class="docutils literal">CodonSeq</tt>, and give
+the returned <tt class="docutils literal">full_rf_table</tt> to <tt class="docutils literal">translate</tt> method of <tt class="docutils literal">CodonSeq</tt>.
+It will then return a gapped translation. This is extremely useful when
+you want to build codon alignment with frameshift.</li>
+</ol>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">codonseq</span> <span class="o">=</span> <span class="n">CodonSeq</span><span class="p">(</span><span class="s">&#39;AAA---TTT------CCCA--GGG&#39;</span><span class="p">,</span><span class="n">rf_table</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">translate</span><span class="p">()</span>
+<span class="n">KFPG</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">full_rf_table</span> <span class="o">=</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">get_full_rf_table</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">full_rf_table</span>
+<span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">21</span><span class="p">]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">rf_table</span><span class="o">=</span><span class="n">full_rf_table</span><span class="p">,</span> <span class="n">ungap_seq</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">K</span><span class="o">-</span><span class="n">F</span><span class="o">--</span><span class="n">PG</span>
+</pre></div>
+<p>Notice: <tt class="docutils literal">ungap_seq</tt> argument is True by default. It is important to set
+it to False when use <tt class="docutils literal">full_rf_table</tt> to translate the sequence!</p>
+<ol class="arabic simple" start="3">
+<li>After thinking about the practical usage of <tt class="docutils literal">CodonSeq</tt>, I changed the
+slice back to normal <tt class="docutils literal">Seq</tt> style slice. It is almost impossible to
+use codon style slice when frameshift occurs. However, the user can
+use <tt class="docutils literal">get_codon()</tt> method to use codon style slice, although the
+method is ugly right now. I don't have a nice way to implement it.</li>
+</ol>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">codonseq</span> <span class="o">=</span> <span class="n">CodonSeq</span><span class="p">(</span><span class="s">&#39;AAA---TTT------CCC---GGC&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">A</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>
+<span class="o">---</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">get_codon</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">AAA</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">get_codon</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="o">---</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">get_codon</span><span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="bp">None</span><span class="p">))</span>
+<span class="n">AAA</span><span class="o">---</span><span class="n">TTT</span><span class="o">---</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="o">.</span><span class="n">get_codon</span><span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">GGC</span><span class="o">---</span><span class="n">CCC</span><span class="o">------</span><span class="n">TTT</span><span class="o">---</span><span class="n">AAA</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codonseq</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">CGG</span><span class="o">---</span><span class="n">CCC</span><span class="o">------</span><span class="n">TTT</span><span class="o">---</span><span class="n">AAA</span>
+</pre></div>
+<ol class="arabic simple" start="4">
+<li>Build codon alignment with forward frameshift. The procedure is
+the same with those without. It is suggestive for the user to have
+a look at the <tt class="docutils literal">test_data/frame.fa</tt> file. In the 10th line of the
+first sequence record, there is an <tt class="docutils literal">A</tt> which is added manually.
+This will break the normal translation. However, with frameshift
+functionality implemented, I am able to align the sequence
+according to their codons.</li>
+</ol>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio</span> <span class="kn">import</span> <span class="n">SeqIO</span><span class="p">,</span> <span class="n">AlignIO</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.Alphabet</span> <span class="kn">import</span> <span class="n">IUPAC</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">__init__</span> <span class="kn">import</span> <span class="n">build</span><span class="p">,</span> <span class="n">default_codon_alphabet</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">shift_nucl</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;test_data/frame.fa&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">shift_aln</span> <span class="o">=</span> <span class="n">AlignIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;test_data/frame.aln&#39;</span><span class="p">,</span> <span class="s">&#39;clustal&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">id</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="s">&#39;test_data/egfr_id&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">()}</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">shift</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">shift_aln</span><span class="p">,</span> <span class="n">shift_nucl</span><span class="p">,</span> <span class="n">corr_dict</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">default_codon_alphabet</span><span class="p">,</span> <span class="n">complete_protein</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">551</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">gi</span><span class="o">|</span><span class="mi">47522840</span><span class="o">|</span><span class="n">ref</span><span class="o">|</span><span class="n">NP_999172</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span> <span class="p">(</span><span class="n">L</span> <span class="mi">449</span><span class="p">)</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">correspond</span> <span class="n">to</span> <span class="n">gi</span><span class="o">|</span><span class="mi">47522839</span><span class="o">|</span><span class="n">ref</span><span class="o">|</span><span class="n">NM_214007</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span> <span class="p">(</span><span class="n">ATG</span><span class="p">)</span>
+  <span class="o">%</span> <span class="p">(</span><span class="n">pro</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">aa</span><span class="p">,</span> <span class="n">aa_num</span><span class="p">,</span> <span class="n">nucl</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">this_codon</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">shift</span><span class="p">:</span>
+<span class="o">...</span>     <span class="k">print</span> <span class="n">i</span><span class="o">.</span><span class="n">seq</span><span class="p">[</span><span class="mi">945</span><span class="p">:</span><span class="mi">963</span><span class="p">]</span>
+<span class="n">TGTTGTCAC</span><span class="o">---</span><span class="n">CTCTTC</span>
+<span class="n">TGTTGTCAC</span><span class="o">---</span><span class="n">CTCTTC</span>
+<span class="n">TGCTGCCACA</span><span class="o">--</span><span class="n">AACCAG</span>
+<span class="n">TGCTGCCAC</span><span class="o">---</span><span class="n">AACCAG</span>
+<span class="n">TGCTGCCAC</span><span class="o">---</span><span class="n">AACCAG</span>
+<span class="n">TGCTGCCAC</span><span class="o">---</span><span class="n">AACCAG</span>
+</pre></div>
+<p>We can see the additional <tt class="docutils literal"><span class="pre">A--</span></tt> in the third <tt class="docutils literal">CodonSeq</tt> record are there.</p>
+</div>
+<div class="section" id="future-plan">
+<h2>Future Plan</h2>
+<ol class="arabic simple">
+<li>Add <tt class="docutils literal">Numpy</tt> slice for CodonAlignment;</li>
+<li>Allow backward frameshift;</li>
+<li>Reorganize the code into different files;</li>
+<li>Construct codon alignment based on <tt class="docutils literal">tblastn</tt> result.</li>
+</ol>
+<p>For more info, please visit my
+[CodonAlign github repo](<a class="reference external" href="https://github.com/zruan/biopython/tree/master/Bio/CodonAlign">https://github.com/zruan/biopython/tree/master/Bio/CodonAlign</a>)</p>
+</div>
+
+    </div><!-- /.entry-content -->
+        <div class="comments">
+      <h2>Comments !</h2>
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+        var disqus_identifier = "3rd-diary.html";
+        (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://zruansblog.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+      </script>
+    </div>
+    
+  </article>
+</section>
+        <section id="extras" class="body">
+                        <div class="blogroll">
+                        <h2>blogroll</h2>
+                        <ul>
+                                                    <li><a href="http://informatics.nescent.org/wiki/Phyloinformatics_Summer_of_Code_2013#Codon_Alignment_and_Analysis_in_Biopython">NESCent GSoC Project wiki</a></li>
+                                                    <li><a href="http://biopython.org/wiki/Main_Page">Biopython</a></li>
+                                                    <li><a href="http://iob.uga.edu/">UGA Bioinformatics</a></li>
+                                                    <li><a href="http://getpelican.com/">Pelican</a></li>
+                                                    <li><a href="http://python.org/">Python.org</a></li>
+                                                    <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
+                                                </ul>
+                </div><!-- /.blogroll -->
+                                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            
+                                                    <li><a href="https://www.facebook.com/ruan.zheng.7">Facebook</a></li>
+                                                    <li><a href="http://zr1991.blogspot.com/">Google Blogger</a></li>
+                                                    <li><a href="http://user.qzone.qq.com/8390905">Qzone</a></li>
+                                                </ul>
+                </div><!-- /.social -->
+                </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+
+        </footer><!-- /#contentinfo -->
+
+<script type="text/javascript">
+    var disqus_shortname = 'zruansblog';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+</body>
+</html>
