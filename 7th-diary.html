@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>7th Diary</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="/theme/css/main.css" type="text/css" />
+   
+
+        <!--[if IE]>
+                <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!--[if lte IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie.css"/>
+                <script src="/js/IE8.js" type="text/javascript"></script><![endif]-->
+
+        <!--[if lt IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie6.css"/><![endif]-->
+
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/index.html">Codon Alignment GSoC Homepage </a></h1>
+                <nav><ul>
+                                                                                                    <li class="active"><a href="/category/gsoc.html">GSoC</a></li>
+                                    <li ><a href="/category/me.html">Me</a></li>
+                                    <li ><a href="/category/timeline.html">Timeline</a></li>
+                                </ul></nav>
+        </header><!-- /#banner -->
+        <section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="7th-diary.html" rel="bookmark"
+           title="Permalink to 7th Diary">7th Diary</a></h1>
+          </header>
+
+    <div class="entry-content">
+      <footer class="post-info">
+        <abbr class="published" title="2013-08-19T10:03:00">
+                Mon 19 August 2013
+        </abbr>
+
+                <address class="vcard author">
+                By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
+        </address>
+        <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
+<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info -->      <div class="section" id="things-have-been-done">
+<h2>Things have been done</h2>
+<p>The job I've mainly done since last week is maximum likelihood
+method for dN/dS ratio estimation. It is one of the most
+difficult part of my GSoC project. Now I have implemented all the
+basic steps described in Yang's 2000 MBE paper (PMID: 10666704). The most
+computational intensive step is to calculate the Q matrix, which
+involves matrix exponential. I employed <tt class="docutils literal">scipy.linalg.expm</tt> to
+achieve the task. For the constraint optimization, I used the
+L-BFGS-B method in <tt class="docutils literal">scipy.optimize.minimize</tt> and it has
+reasonable performance (about several seconds to have pairwise
+dN/dS estimated). The result is not exactly the same with the
+example in Yang's book but very similar, so I expect the
+difference might be caused by slightly different sequences.
+Maximum Likelihood method is a model based method, which is able
+to incorporate different substitution schemes. In the next week,
+I will allow user to specify different substitution model. While
+I am writing documentation for <tt class="docutils literal">Bio.CodonAlign</tt>, several bugs
+has been found and they are fixed when I found them. Therefore, I
+am writing documentation in a rather slow pace. I also changed the upper
+length limit of forward frameshift events. The program will now
+allow more than 2 bases of forward frameshift but it should not
+exceed the <tt class="docutils literal">anchor_len</tt> . If the purpose is to handle intron in
+DNA sequence, this is not useful as intron is typically very large.
+I need to think about it more carefully.</p>
+<p>I don't have examples this week, as ML method is used exactly the
+same as the others.</p>
+</div>
+<div class="section" id="future-plan">
+<h2>Future Plan</h2>
+<ol class="arabic simple">
+<li>Implement YN00 method</li>
+<li>Add more options for ML method (allow different substitution model)</li>
+<li>Continue Writing documentation for codon alignment construction.</li>
+</ol>
+<p>For more info, please visit my
+[CodonAlign github repo](<a class="reference external" href="https://github.com/zruan/biopython/tree/master/Bio/CodonAlign">https://github.com/zruan/biopython/tree/master/Bio/CodonAlign</a>)</p>
+</div>
+
+    </div><!-- /.entry-content -->
+        <div class="comments">
+      <h2>Comments !</h2>
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+        var disqus_identifier = "7th-diary.html";
+        (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://zruansblog.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+      </script>
+    </div>
+    
+  </article>
+</section>
+        <section id="extras" class="body">
+                        <div class="blogroll">
+                        <h2>blogroll</h2>
+                        <ul>
+                                                    <li><a href="http://informatics.nescent.org/wiki/Phyloinformatics_Summer_of_Code_2013#Codon_Alignment_and_Analysis_in_Biopython">NESCent GSoC Project wiki</a></li>
+                                                    <li><a href="http://biopython.org/wiki/Main_Page">Biopython</a></li>
+                                                    <li><a href="http://iob.uga.edu/">UGA Bioinformatics</a></li>
+                                                    <li><a href="http://getpelican.com/">Pelican</a></li>
+                                                    <li><a href="http://python.org/">Python.org</a></li>
+                                                    <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
+                                                </ul>
+                </div><!-- /.blogroll -->
+                                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            
+                                                    <li><a href="https://www.facebook.com/ruan.zheng.7">Facebook</a></li>
+                                                    <li><a href="http://zr1991.blogspot.com/">Google Blogger</a></li>
+                                                    <li><a href="http://user.qzone.qq.com/8390905">Qzone</a></li>
+                                                </ul>
+                </div><!-- /.social -->
+                </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+
+        </footer><!-- /#contentinfo -->
+
+<script type="text/javascript">
+    var disqus_shortname = 'zruansblog';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+</body>
+</html>

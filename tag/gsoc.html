@@ -32,10 +32,10 @@
 
                             <aside id="featured" class="body">
                 <article>
-                    <h1 class="entry-title"><a href="/6th-diary.html">6th Diary</a></h1> 
+                    <h1 class="entry-title"><a href="/7th-diary.html">7th Diary</a></h1> 
                     <footer class="post-info">
-        <abbr class="published" title="2013-08-11T11:15:00">
-                Sun 11 August 2013
+        <abbr class="published" title="2013-08-19T10:03:00">
+                Mon 19 August 2013
         </abbr>
 
                 <address class="vcard author">
@@ -44,100 +44,72 @@
         <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
 <p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info --><div class="section" id="things-have-been-done">
 <h2>Things have been done</h2>
-<p>In last two weeks I implement a <tt class="docutils literal">max_score</tt> option to
-<tt class="docutils literal">CodonAlign.build</tt> for codon alignment construction. Any
-unexpected events will cost 1 point to the score. If the score
-reached negative before the protein-nucleotide match was found, an
-<tt class="docutils literal">RuntimeError</tt> will raise up. The <tt class="docutils literal">max_score</tt> will only be
-applied to a single nucleotide-protein match but not the whole
-alignment. I am also writing the
-documentation for codon alignment construction. However, some bugs
-are found when I am trying to solve some real world issues, such
-as CDS record support and lower case -- upper case codon
-translation. I put them into a TODO list and they will be fixed in
-the following weeks. This week I also implemented some counting base
-methods for dN/dS estimation ( <tt class="docutils literal">Bio.CodonAlign.CodonSeq.cal_dn_ds</tt>
-). It includes NG86 (PMID: 3444411) and
-LWL85 (PMID: 3916709) methods. My main reference is Ziheng Yang's
-Computational Molecular Evolution as well as the original paper of
-the methods. I made some adjustment to the algorithm so that it is
-easier to be implemented. The result is very similar to the examples
-given in Yang's book.</p>
-</div>
-<div class="section" id="some-examples">
-<h2>Some Examples</h2>
-<p>Score option and some counting based dN/dS ratio estimation methods
-are illustrated here.</p>
-<ol class="arabic simple">
-<li>Build a codon alignment will a <tt class="docutils literal">max_score</tt> option.</li>
-</ol>
-<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.CodonAlign</span> <span class="kn">import</span> <span class="n">CodonSeq</span><span class="p">,</span> <span class="n">build</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.Alphabet</span> <span class="kn">import</span> <span class="n">IUPAC</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.Seq</span> <span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.SeqRecord</span> <span class="kn">import</span> <span class="n">SeqRecord</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.Align</span> <span class="kn">import</span> <span class="n">MultipleSeqAlignment</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq1</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;ATGAAAAAGCACGAGTTACTTTGCCAAGGGACAAGTAACAAGCTCACCCAGTTGGGCACTTTTGAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAACTGTGAGGTGGTC&#39;</span><span class="p">,</span> \
-<span class="o">...</span>           <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">()),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro1&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq2</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;ATGAAAAAGCACGAGTTCTTTGCCAAGGGACAAGTAACAAGCTCACCCAGTTGGGCACTTTTGAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAATGTGAGGTGGTC&#39;</span><span class="p">,</span>   \
-<span class="o">...</span>           <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">()),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro2&#39;</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pro1</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;MKKHELLCQGTSNKLTQLGTFEDHFLSLQRMFNNCEVV&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro1&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pro2</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;MKKHEFLCQGTSNKLTQLGTFEDHFLSLQRMFNNCEVV&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro2&#39;</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">aln</span> <span class="o">=</span> <span class="n">MultipleSeqAlignment</span><span class="p">([</span><span class="n">pro1</span><span class="p">,</span> <span class="n">pro2</span><span class="p">,</span> <span class="n">pro3</span><span class="p">,</span> <span class="n">pro4</span><span class="p">,</span> <span class="n">pro5</span><span class="p">])</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">codon_aln</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">aln</span><span class="p">,</span> <span class="p">[</span><span class="n">seq1</span><span class="p">,</span> <span class="n">seq2</span><span class="p">],</span> <span class="n">max_score</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">rz</span><span class="o">/</span><span class="n">Working</span><span class="o">.</span><span class="n">Dir</span><span class="o">/</span><span class="n">GSoC</span><span class="o">/</span><span class="n">biopython</span><span class="o">/</span><span class="n">Bio</span><span class="o">/</span><span class="n">CodonAlign</span><span class="o">/</span><span class="n">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">588</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">Codon</span> <span class="n">of</span> <span class="n">pro4</span> <span class="p">(</span><span class="n">Q</span> <span class="mi">28</span><span class="p">)</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">correspond</span> <span class="n">to</span> <span class="n">pro4</span> <span class="p">(</span><span class="n">CCG</span><span class="p">)</span>
-  <span class="o">%</span> <span class="p">(</span><span class="n">pro</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">aa</span><span class="p">,</span> <span class="n">aa_num</span><span class="p">,</span> <span class="n">nucl</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">this_codon</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">codon_aln</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">aln</span><span class="p">,</span> <span class="p">[</span><span class="n">seq1</span><span class="p">,</span> <span class="n">seq2</span><span class="p">],</span> <span class="n">max_score</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
-  <span class="n">File</span> <span class="s">&quot;&lt;stdin&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
-  <span class="n">File</span> <span class="s">&quot;/home/rz/Working.Dir/GSoC/biopython/Bio/CodonAlign/__init__.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">151</span><span class="p">,</span> <span class="ow">in</span> <span class="n">build</span>
-    <span class="n">max_score</span><span class="o">=</span><span class="n">max_score</span><span class="p">)</span>
-  <span class="n">File</span> <span class="s">&quot;/home/rz/Working.Dir/GSoC/biopython/Bio/CodonAlign/__init__.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">602</span><span class="p">,</span> <span class="ow">in</span> <span class="n">_get_codon_rec</span>
-    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&quot;max_score reached for </span><span class="si">%s</span><span class="s">! Please raise up the tolerance to get an alignment in anyway&quot;</span> <span class="o">%</span> <span class="n">nucl</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-<span class="ne">RuntimeError</span><span class="p">:</span> <span class="n">max_score</span> <span class="n">reached</span> <span class="k">for</span> <span class="n">pro2</span><span class="err">!</span> <span class="n">Please</span> <span class="k">raise</span> <span class="n">up</span> <span class="n">the</span> <span class="n">tolerance</span> <span class="n">to</span> <span class="n">get</span> <span class="n">an</span> <span class="n">alignment</span> <span class="ow">in</span> <span class="n">anyway</span>
-</pre></div>
-<ol class="arabic simple" start="2">
-<li>I will use the <cite>rbcL</cite> gene in mitochondria to demonstrate the
-<tt class="docutils literal">Bio.CodonAlign.CodonSeq.cal_dn_ds</tt> methods. <cite>rbcL</cite> gene
-sequence data can be found at the <tt class="docutils literal">test_data</tt> folder.</li>
-</ol>
-<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.CodonAlign.CodonSeq</span> <span class="kn">import</span> <span class="n">cal_dn_ds</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio</span> <span class="kn">import</span> <span class="n">AlignIO</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">aln</span> <span class="o">=</span> <span class="n">AlignIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;pro.aln&#39;</span><span class="p">,</span> <span class="s">&#39;clustal&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq1</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;rbcL_cucu_mRNA.fa&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq2</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;rbcL_nic_mRNA.fa&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
-<span class="c"># Plant mitochondria codon table</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">codon_aln</span> <span class="o">=</span> <span class="n">CodonAlign</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">aln</span><span class="p">,</span> <span class="p">[</span><span class="n">seq1</span><span class="p">,</span> <span class="n">seq2</span><span class="p">],</span> <span class="n">codon_table</span><span class="o">=</span><span class="n">generic_by_id</span><span class="p">[</span><span class="mi">11</span><span class="p">])</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">cal_dn_ds</span><span class="p">(</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;NG86&#39;</span><span class="p">)</span>
-<span class="p">(</span><span class="mf">0.033141670590857486</span><span class="p">,</span> <span class="mf">0.38841691896355535</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">cal_dn_ds</span><span class="p">(</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;LWL85&#39;</span><span class="p">)</span>
-<span class="p">(</span><span class="mf">0.03681649793967219</span><span class="p">,</span> <span class="mf">0.3533306403459817</span><span class="p">)</span>
-</pre></div>
-<p>The output is (dN, dS). Because different bases of counting method,
-the dN and dS itself can be different, but the ratio is approximated 0.1,
-indicating a significant purifying selection in the gene.</p>
+<p>The job I've mainly done since last week is maximum likelihood
+method for dN/dS ratio estimation. It is one of the most
+difficult part of my GSoC project. Now I have implemented all the
+basic steps described in Yang's 2000 MBE paper (PMID: 10666704). The most
+computational intensive step is to calculate the Q matrix, which
+involves matrix exponential. I employed <tt class="docutils literal">scipy.linalg.expm</tt> to
+achieve the task. For the constraint optimization, I used the
+L-BFGS-B method in <tt class="docutils literal">scipy.optimize.minimize</tt> and it has
+reasonable performance (about several seconds to have pairwise
+dN/dS estimated). The result is not exactly the same with the
+example in Yang's book but very similar, so I expect the
+difference might be caused by slightly different sequences.
+Maximum Likelihood method is a model based method, which is able
+to incorporate different substitution schemes. In the next week,
+I will allow user to specify different substitution model. While
+I am writing documentation for <tt class="docutils literal">Bio.CodonAlign</tt>, several bugs
+has been found and they are fixed when I found them. Therefore, I
+am writing documentation in a rather slow pace. I also changed the upper
+length limit of forward frameshift events. The program will now
+allow more than 2 bases of forward frameshift but it should not
+exceed the <tt class="docutils literal">anchor_len</tt> . If the purpose is to handle intron in
+DNA sequence, this is not useful as intron is typically very large.
+I need to think about it more carefully.</p>
+<p>I don't have examples this week, as ML method is used exactly the
+same as the others.</p>
 </div>
 <div class="section" id="future-plan">
 <h2>Future Plan</h2>
 <ol class="arabic simple">
-<li>Implement more dN/dS ratio estimation methods, such as LWL85m,
-LPB93, Ina95 and YN00. Depending on the difficulty, I may need
-some more time to be familiar with their counting bases.</li>
-<li>Implement the Maximum Likelihood method for dN/dS ratio estimation.</li>
+<li>Implement YN00 method</li>
+<li>Add more options for ML method (allow different substitution model)</li>
 <li>Continue Writing documentation for codon alignment construction.</li>
 </ol>
 <p>For more info, please visit my
 [CodonAlign github repo](<a class="reference external" href="https://github.com/zruan/biopython/tree/master/Bio/CodonAlign">https://github.com/zruan/biopython/tree/master/Bio/CodonAlign</a>)</p>
 </div>
-<p>There are <a href="/6th-diary.html#disqus_thread">comments</a>.</p>                </article>
+<p>There are <a href="/7th-diary.html#disqus_thread">comments</a>.</p>                </article>
                             </aside><!-- /#featured -->
                             <section id="content" class="body">
                     <h1>Other articles</h1>
                     <hr />
                     <ol id="posts-list" class="hfeed">
                                                         
+
+                 
+                        <li><article class="hentry">    
+                <header>
+                        <h1><a href="/6th-diary.html" rel="bookmark" title="Permalink to 6th Diary">6th Diary</a></h1>
+                </header>
+                
+                <div class="entry-content">
+                <footer class="post-info">
+        <abbr class="published" title="2013-08-11T11:15:00">
+                Sun 11 August 2013
+        </abbr>
+
+                <address class="vcard author">
+                By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
+        </address>
+        <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
+<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info -->                <p class="first last">score option and some counting based dN/dS estimation.</p>
+
+                <a class="readmore" href="/6th-diary.html">read more</a>
+                <p>There are <a href="/6th-diary.html#disqus_thread">comments</a>.</p>                </div><!-- /.entry-content -->
+            </article></li>
+                                    
 
                  
                         <li><article class="hentry">    
