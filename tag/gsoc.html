@@ -32,10 +32,10 @@
 
                             <aside id="featured" class="body">
                 <article>
-                    <h1 class="entry-title"><a href="/8th-diary.html">8th Diary</a></h1> 
+                    <h1 class="entry-title"><a href="/9th-diary.html">9th Diary</a></h1> 
                     <footer class="post-info">
-        <abbr class="published" title="2013-09-02T11:46:00">
-                Mon 02 September 2013
+        <abbr class="published" title="2013-09-09T21:43:00">
+                Mon 09 September 2013
         </abbr>
 
                 <address class="vcard author">
@@ -44,104 +44,120 @@
         <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
 <p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info --><div class="section" id="things-have-been-done">
 <h2>Things have been done</h2>
-<p>In the last two weeks, the major job I've done is YN00 method
-support for dN/dS ratio estimation. This method is much more complex
-than I expected and some typos in original paper (PMID: 10666704)
-make my implementation even more difficult. The e.q. 9 of of the
-paper is not the same with the yn00.c of PAML (line 803). In this
-case, I have to go through yn00.c and make sure each step of my
-implementation produces similar result with Yang's code. Now the
-YN00 method in <tt class="docutils literal">cal_dn_ds</tt> is generally correct, except the
-initial values for iteration entail to be modified. I also add
-a <tt class="docutils literal">get_dn_ds_matrix()</tt> method to <tt class="docutils literal">CodonAlignment</tt> class so
-that user will obtain a paiwise dN matrix and dS matrix from the
-method. Another feature I've added is the multiple nucleotides
-forward frameshift mutation support. An example of this can be
-found below. However, due to the inherent difficult of using
-regular expression to anchor protein with nucleotide, the more
-than 2 nucleotides forward frameshift events should not occur at
-the first or last anchor.</p>
+<p>This week I implement the McDonald-Kreitman test for neutrality. The function
+for MK test is <tt class="docutils literal">Bio.CodonAlign.CodonAlignment.mktest()</tt>. It accepts a list
+of <tt class="docutils literal">CodonAlignment</tt> objects (each should correspond to a gene that is
+sequenced from a species). It will count the fixed/poly
+synonymous/nonsynonymous substitutions and apply a G-test for significance.
+Several things should be noted here. First, the method has not been heavily
+tested, as I didn't find much data. I used the fruit fly <cite>Adh</cite> gene that
+McDonald and Kreitman used in their original paper (PMID: 1904993) when
+writting the code (See example below). Second, McDonald-Kreitman test is
+actually a 2x2 contingency table test. Ideally, correction should be applied
+when one or more cells of the table is less than 5. However, this is not done
+right now. Third, Dijkstra's algorithm is used to calculate the minimum
+nonsynonymous substitutions required for two codons. This is probably the
+slowest part of the current implementation, as Dijkstra's algorithm calculate
+the shortest distance to any other codons in the graph. I will try to speed up
+the implementation by reducing repetitive calculation. Fourth, there are many
+extensions of MK test (For example, Smith and Eyre-Walker 2002), which I plan
+to implement some of them after my GSoC.</p>
 </div>
 <div class="section" id="some-examples">
 <h2>Some Examples</h2>
-<p>1) Now <tt class="docutils literal">cal_dn_ds()</tt> method is able to estimate dN/dS ratio using
-NG86, LWL85, YN00 and ML methods.</p>
+<p>The example below is actually what McDonald-Kreitman used when they first
+published the method. They sequenced 12 individuals from <cite>D. melanogaster</cite>
+(11 in the following example), 6 individuals from <cite>D. simulans</cite>
+(4 in the following example), 12 individuals from <cite>D. yakuba</cite>. I will first
+build a codon alignment for all the sequences and seperate them into three
+species and then apply the test.</p>
 <div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio</span> <span class="kn">import</span> <span class="n">SeqIO</span><span class="p">,</span> <span class="n">AlignIO</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio</span> <span class="kn">import</span> <span class="n">CodonAlign</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.Data.CodonTable</span> <span class="kn">import</span> <span class="n">generic_by_id</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.Alphabet</span> <span class="kn">import</span> <span class="n">IUPAC</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.CodonAlign.CodonSeq</span> <span class="kn">import</span> <span class="n">cal_dn_ds</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.CodonAlign</span> <span class="kn">import</span> <span class="n">build</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.CodonAlign.CodonAlignment</span> <span class="kn">import</span> <span class="n">mktest</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="n">aln</span> <span class="o">=</span> <span class="n">AlignIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;pro.aln&#39;</span><span class="p">,</span> <span class="s">&#39;clustal&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq1</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;rbcL_cucu_mRNA.fa&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq2</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;rbcL_nic_mRNA.fa&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pro_aln</span> <span class="o">=</span> <span class="n">AlignIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;adh.aln&#39;</span><span class="p">,</span> <span class="s">&#39;clustal&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s">&#39;drosophilla.fasta&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="n">codon_aln</span> <span class="o">=</span> <span class="n">CodonAlign</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">aln</span><span class="p">,</span> <span class="p">[</span><span class="n">seq1</span><span class="p">,</span> <span class="n">seq2</span><span class="p">],</span> <span class="n">codon_table</span><span class="o">=</span><span class="n">generic_by_id</span><span class="p">[</span><span class="mi">11</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">codon_aln</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">pro_aln</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span> <span class="o">=</span> <span class="n">cal_dn_ds</span><span class="p">(</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;NG86&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span><span class="p">,</span> <span class="n">dN</span><span class="o">/</span><span class="n">dS</span>
-<span class="mf">0.0360453355368</span> <span class="mf">0.399965211638</span> <span class="mf">0.0901211767622</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span> <span class="o">=</span> <span class="n">cal_dn_ds</span><span class="p">(</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;LWL85&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span><span class="p">,</span> <span class="n">dN</span><span class="o">/</span><span class="n">dS</span>
-<span class="mf">0.0376618724075</span> <span class="mf">0.357887756398</span> <span class="mf">0.105233754813</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span> <span class="o">=</span> <span class="n">cal_dn_ds</span><span class="p">(</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;ML&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span><span class="p">,</span> <span class="n">dN</span><span class="o">/</span><span class="n">dS</span>
-<span class="mf">0.0342472820368</span> <span class="mf">0.420673537297</span> <span class="mf">0.0814105927765</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span> <span class="o">=</span> <span class="n">cal_dn_ds</span><span class="p">(</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;YN00&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span><span class="p">,</span> <span class="n">dN</span><span class="o">/</span><span class="n">dS</span>
-<span class="mf">0.0327731426263</span> <span class="mf">0.525218485301</span> <span class="mf">0.0623990654241</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codon_aln</span>
+<span class="n">CodonAlphabet</span><span class="p">(</span><span class="n">Standard</span><span class="p">)</span> <span class="n">CodonAlignment</span> <span class="k">with</span> <span class="mi">27</span> <span class="n">rows</span> <span class="ow">and</span> <span class="mi">768</span> <span class="n">columns</span> <span class="p">(</span><span class="mi">256</span> <span class="n">codons</span><span class="p">)</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9217</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57365</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9219</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57366</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9221</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57367</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9223</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57368</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9225</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57369</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9227</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57370</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9229</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57371</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9231</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57372</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9233</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57373</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9235</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57374</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9237</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57375</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9239</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57376</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9097</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57361</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9099</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57362</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9101</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57363</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGGCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATC</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9103</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57364</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156879</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17837</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCK</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156877</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17836</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCJ</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156875</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17835</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCI</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156873</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17834</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCH</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156871</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17833</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCG</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156863</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M19547</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCC</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156869</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17832</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCF</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156867</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17831</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCE</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156865</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17830</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCD</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156861</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17828</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCB</span>
+<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156859</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17827</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCA</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">mktest</span><span class="p">([</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">12</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">16</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">16</span><span class="p">:]])</span>
+<span class="mf">0.00206457257254</span>
 </pre></div>
-<p>2) The following example will show how multiple nucleotides forward
-frameshift events are supported:</p>
-<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.Seq</span> <span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.SeqRecord</span> <span class="kn">import</span> <span class="n">SeqRecord</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.Align</span> <span class="kn">import</span> <span class="n">MultipleSeqAlignment</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq1</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;ATGAAAAAGCACGAGTTACTTTGCCAAGGGACAAGTAACAAGCTCACCCAGTTGGGCACTTTTGAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAACTGTGAGGTGGTCGGGGGGGGGGGGGGCTTGGGAATTTGGAAATTACCTACATGCAGAGTAGTTACAACCTTTCTTTTCTCAAGACCATCCAGGAGGTTGCCGGCTATGTACTCATTGCCCTC&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">()),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro1&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq2</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;ATGAAAAAGCACGAGTTCTTTGCCAAGGGACAAGTAACAAGCTCACCCAGTTGGGCACTTTTGAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAATGTGAGGTGGTCCTTGGGAATTTGGAAATTACCTACATGCAGAGTAGTTACAACCTTTCTTTTCTCAAGACCATCCAGGAGGTTGCCGGCTATGTACTCATTGCCCTC&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">()),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro2&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq3</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;ATGAAAAAGCACGAGTTACTTTGCCAAGGGACAAGTAACAAGCTCACCCTTGGGCACTTTTGAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAACTGTGAGGTGGTCCTTGGGAATTTGGAAATTACCTACATGCAGAGTAGTTACAACCTTTCTTTTCTCAAGACCATCCAGGAGGTTGCCGGCTATGTACTCATTGCCCTC&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">()),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro3&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq4</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;ATGAAAAAGCACGAGTTACTTTGCCAAGGGACAAGTAACAAGCTCACCCAGTTGGGCACTTTTGAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAACTGTGAGGTGGTCCTTGGGAATTTGGAAATTACCTACATGCAGAGTAGTTACAACCTTTCTTTTCTCAAGACCATCCAGGAGGTTGCCGGCTATGTACTCATTGCCCTC&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">()),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro4&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seq5</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;ATGAAAAAGCACGAGTTACTTTGCCAAGGGACAAGTAACAAGCTCACCCAGTTGGGCACTTTTGGGAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAACTGTGAGGTGGTCCTTGGGAATTTGGAAATTACCTACATGCAGAGTAGTTACAACCTTTCTTTTCTCAAGACCATCCAGGAGGTTGCCGGCTATGTACTCATTGCCCTC&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">()),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro5&#39;</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pro1</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;MKKHELLCQGTSNKLTQLGTFEDHFLSLQRMFNNCEVVLGNLEITYMQSSYNLSFLKTIQEVAGYVLIAL&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro1&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pro2</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;MKKHEFLCQGTSNKLTQLGTFEDHFLSLQRMFNNCEVVLGNLEITYMQSSYNLSFLKTIQEVAGYVLIAL&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro2&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pro3</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;MKKHELLCQGTSNKLTLLGTFEDHFLSLQRMFNNCEVVLGNLEITYMQSSYNLSFLKTIQEVAGYVLIAL&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro3&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pro4</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;MKKHELLCQGTSNKLTQLGTFEDHFLSLQRMFNNCEVVLGNLEITYMCSSYNLSFLKTIQEVAGYVLIAL&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro4&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pro5</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s">&#39;MKKHELLCQGTSNKLTQLGTFEDHFLSLQRMFNNCEVVLGNLEITYMQSSYNLSFLKTIQEVAGYVLIAL&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">),</span> <span class="nb">id</span><span class="o">=</span><span class="s">&#39;pro5&#39;</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">aln</span> <span class="o">=</span> <span class="n">MultipleSeqAlignment</span><span class="p">([</span><span class="n">pro1</span><span class="p">,</span> <span class="n">pro2</span><span class="p">,</span> <span class="n">pro3</span><span class="p">,</span> <span class="n">pro4</span><span class="p">,</span> <span class="n">pro5</span><span class="p">])</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">codon_aln</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">aln</span><span class="p">,</span> <span class="p">[</span><span class="n">seq1</span><span class="p">,</span> <span class="n">seq2</span><span class="p">,</span> <span class="n">seq3</span><span class="p">,</span> <span class="n">seq4</span><span class="p">,</span> <span class="n">seq5</span><span class="p">],</span> <span class="n">anchor_len</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">codon_aln</span><span class="p">:</span>
-<span class="o">...</span>     <span class="k">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span>
-<span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">rz</span><span class="o">/</span><span class="n">Working</span><span class="o">.</span><span class="n">Dir</span><span class="o">/</span><span class="n">GSoC</span><span class="o">/</span><span class="n">biopython</span><span class="o">/</span><span class="n">Bio</span><span class="o">/</span><span class="n">CodonAlign</span><span class="o">/</span><span class="n">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">578</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">pro4</span><span class="p">(</span><span class="n">C</span> <span class="mi">47</span><span class="p">)</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">correspond</span> <span class="n">to</span> <span class="n">pro4</span><span class="p">(</span><span class="n">CAG</span><span class="p">)</span>
-  <span class="o">%</span> <span class="p">(</span><span class="n">pro</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">aa</span><span class="p">,</span> <span class="n">aa_num</span><span class="p">,</span> <span class="n">nucl</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">this_codon</span><span class="p">))</span>
-  <span class="n">ATGAAAAAGCACGAGTTACTTTGCCAAGGGACAAGTAACAAGCTCACCCAGTTGGGCACTTTT</span><span class="o">---</span><span class="n">GAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAACTGTGAGGTGGTC</span><span class="o">-</span><span class="n">GGGGGGGGGGGGGGCTTGGGAATTTGGAAATTACCTACATGCAGAGTAGTTACAACCTTTCTTTTCTCAAGACCATCCAGGAGGTTGCCGGCTATGTACTCATTGCCCTC</span>
-  <span class="n">ATGAAAAAGCACGAGTT</span><span class="o">-</span><span class="n">CTTTGCCAAGGGACAAGTAACAAGCTCACCCAGTTGGGCACTTTT</span><span class="o">---</span><span class="n">GAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAA</span><span class="o">-</span><span class="n">TGTGAGGTGGTC</span><span class="o">---------------</span><span class="n">CTTGGGAATTTGGAAATTACCTACATGCAGAGTAGTTACAACCTTTCTTTTCTCAAGACCATCCAGGAGGTTGCCGGCTATGTACTCATTGCCCTC</span>
-  <span class="n">ATGAAAAAGCACGAGTTACTTTGCCAAGGGACAAGTAACAAGCTCACCC</span><span class="o">--</span><span class="n">TTGGGCACTTTT</span><span class="o">---</span><span class="n">GAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAACTGTGAGGTGGTC</span><span class="o">---------------</span><span class="n">CTTGGGAATTTGGAAATTACCTACATGCAGAGTAGTTACAACCTTTCTTTTCTCAAGACCATCCAGGAGGTTGCCGGCTATGTACTCATTGCCCTC</span>
-  <span class="n">ATGAAAAAGCACGAGTTACTTTGCCAAGGGACAAGTAACAAGCTCACCCAGTTGGGCACTTTT</span><span class="o">---</span><span class="n">GAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAACTGTGAGGTGGTC</span><span class="o">---------------</span><span class="n">CTTGGGAATTTGGAAATTACCTACATGCAGAGTAGTTACAACCTTTCTTTTCTCAAGACCATCCAGGAGGTTGCCGGCTATGTACTCATTGCCCTC</span>
-  <span class="n">ATGAAAAAGCACGAGTTACTTTGCCAAGGGACAAGTAACAAGCTCACCCAGTTGGGCACTTTTGG</span><span class="o">-</span><span class="n">GAAGACCACTTTCTGAGCCTACAGAGGATGTTCAACAACTGTGAGGTGGTC</span><span class="o">---------------</span><span class="n">CTTGGGAATTTGGAAATTACCTACATGCAGAGTAGTTACAACCTTTCTTTTCTCAAGACCATCCAGGAGGTTGCCGGCTATGTACTCATTGCCCTC</span>
-</pre></div>
-<p>From the alignment above, we can see multiple Gs are shifted and gaps are added to the corresponding region of other records.</p>
+<p>The mktest didn't output much in the screen (only the p-value). I will modify this to be
+more user friendly. The count for fixed/poly synonymous/nonsynonymous substitutions is
+[18.0, 7.0, 39.0, 1.0]. Compared with McDonald-Kreitman's result -- [17.0, 7.0, 42.0, 2.0],
+it is rather similar.</p>
 </div>
 <div class="section" id="future-plan">
 <h2>Future Plan</h2>
 <ol class="arabic simple">
 <li>Add more options for ML method (allow different substitution model);</li>
-<li>Implement mcdonald kreitman neutrality test;</li>
 <li>Tree estimation using dN, dS distance;</li>
 <li>Documentation.</li>
 </ol>
 <p>For more info, please visit my
 [CodonAlign github repo](<a class="reference external" href="https://github.com/zruan/biopython/tree/master/Bio/CodonAlign">https://github.com/zruan/biopython/tree/master/Bio/CodonAlign</a>)</p>
 </div>
-<p>There are <a href="/8th-diary.html#disqus_thread">comments</a>.</p>                </article>
+<p>There are <a href="/9th-diary.html#disqus_thread">comments</a>.</p>                </article>
                             </aside><!-- /#featured -->
                             <section id="content" class="body">
                     <h1>Other articles</h1>
                     <hr />
                     <ol id="posts-list" class="hfeed">
                                                         
+
+                 
+                        <li><article class="hentry">    
+                <header>
+                        <h1><a href="/8th-diary.html" rel="bookmark" title="Permalink to 8th Diary">8th Diary</a></h1>
+                </header>
+                
+                <div class="entry-content">
+                <footer class="post-info">
+        <abbr class="published" title="2013-09-02T11:46:00">
+                Mon 02 September 2013
+        </abbr>
+
+                <address class="vcard author">
+                By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
+        </address>
+        <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
+<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info -->                <p class="first last">YN00 method for dN/dS ratio estimation and general features for Codon Alignment</p>
+
+                <a class="readmore" href="/8th-diary.html">read more</a>
+                <p>There are <a href="/8th-diary.html#disqus_thread">comments</a>.</p>                </div><!-- /.entry-content -->
+            </article></li>
+                                    
 
                  
                         <li><article class="hentry">    
@@ -328,28 +344,6 @@ Hope ...</p>
 
                 <a class="readmore" href="/1st-diary.html">read more</a>
                 <p>There are <a href="/1st-diary.html#disqus_thread">comments</a>.</p>                </div><!-- /.entry-content -->
-            </article></li>
-                                    
-
-                 
-                        <li><article class="hentry">    
-                <header>
-                        <h1><a href="/codon-alignment.html" rel="bookmark" title="Permalink to Codon Alignment">Codon Alignment</a></h1>
-                </header>
-                
-                <div class="entry-content">
-                <footer class="post-info">
-        <abbr class="published" title="2013-06-04T23:53:00">
-                Tue 04 June 2013
-        </abbr>
-
-                <address class="vcard author">
-                By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
-        </address>
-        <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
-<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info -->                <p>General Description of Codon Alignment Project</p>
-                <a class="readmore" href="/codon-alignment.html">read more</a>
-                <p>There are <a href="/codon-alignment.html#disqus_thread">comments</a>.</p>                </div><!-- /.entry-content -->
             </article></li>
                             <p class="paginator">
         Page 1 / 2
