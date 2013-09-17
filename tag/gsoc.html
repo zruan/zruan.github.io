@@ -32,10 +32,10 @@
 
                             <aside id="featured" class="body">
                 <article>
-                    <h1 class="entry-title"><a href="/9th-diary.html">9th Diary</a></h1> 
+                    <h1 class="entry-title"><a href="/10th-diary.html">10th Diary</a></h1> 
                     <footer class="post-info">
-        <abbr class="published" title="2013-09-09T21:43:00">
-                Mon 09 September 2013
+        <abbr class="published" title="2013-09-16T22:48:00">
+                Mon 16 September 2013
         </abbr>
 
                 <address class="vcard author">
@@ -44,97 +44,157 @@
         <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
 <p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info --><div class="section" id="things-have-been-done">
 <h2>Things have been done</h2>
-<p>This week I implement the McDonald-Kreitman test for neutrality. The function
-for MK test is <tt class="docutils literal">Bio.CodonAlign.CodonAlignment.mktest()</tt>. It accepts a list
-of <tt class="docutils literal">CodonAlignment</tt> objects (each should correspond to a gene that is
-sequenced from a species). It will count the fixed/poly
-synonymous/nonsynonymous substitutions and apply a G-test for significance.
-Several things should be noted here. First, the method has not been heavily
-tested, as I didn't find much data. I used the fruit fly <cite>Adh</cite> gene that
-McDonald and Kreitman used in their original paper (PMID: 1904993) when
-writting the code (See example below). Second, McDonald-Kreitman test is
-actually a 2x2 contingency table test. Ideally, correction should be applied
-when one or more cells of the table is less than 5. However, this is not done
-right now. Third, Dijkstra's algorithm is used to calculate the minimum
-nonsynonymous substitutions required for two codons. This is probably the
-slowest part of the current implementation, as Dijkstra's algorithm calculate
-the shortest distance to any other codons in the graph. I will try to speed up
-the implementation by reducing repetitive calculation. Fourth, there are many
-extensions of MK test (For example, Smith and Eyre-Walker 2002), which I plan
-to implement some of them after my GSoC.</p>
+<p>In the last coding week for my GSoC project, I am mainly dealing with issues
+left from previous weeks as well as several new features. First, a <tt class="docutils literal">cfreq</tt>
+option has been added to the maximum likelihood method and it allows the user
+to specify equilibrium codon frequency model (available options include F1x4,
+F3x4 and F61). Second new feature is dN, dS tree reconstruction. This is done
+by using Yanbo Ye's Code (specifically, <tt class="docutils literal">DistanceMatrix</tt> and
+<tt class="docutils literal">DistanceTreeConstructor</tt> classes). This method is implemented in
+<tt class="docutils literal">CodonAlignment</tt> class so that user can build a dN tree and dS tree once it
+get the alignment. Furthermore, I corrected all the things Eric pointed out in
+my code several days ago. <tt class="docutils literal">toCodonAlignment</tt> is now a classmethod for
+called <tt class="docutils literal">from_msa</tt> in <tt class="docutils literal">CodonAlignment</tt> class, rather than an independent
+function. I also speed up
+the Mcdonald Kreitman test implementation by breaking the _dijkstra() once it
+arrives at the target codon. However, I think I can make it even faster by
+building codon to codon substitution matrix on the fly (I may do this after my
+GSoC). In addition, I removes the Scipy dependency by using the <tt class="docutils literal">chisq.py</tt>
+from Eric's biofrills/stats/. When the convergency problem in
+Phylo/PAML/chi2.py is solved, I may shift it back to Biopython's chi2
+implementation. I also re-organized the <tt class="docutils literal">cal_dn_ds</tt> method so that it is more
+readable.</p>
 </div>
 <div class="section" id="some-examples">
 <h2>Some Examples</h2>
-<p>The example below is actually what McDonald-Kreitman used when they first
-published the method. They sequenced 12 individuals from <cite>D. melanogaster</cite>
-(11 in the following example), 6 individuals from <cite>D. simulans</cite>
-(4 in the following example), 12 individuals from <cite>D. yakuba</cite>. I will first
-build a codon alignment for all the sequences and seperate them into three
-species and then apply the test.</p>
+<p>I will illustrate the two new features described above.</p>
+<ol class="arabic simple">
+<li>Using different equilibrium codon frequency model to estimate dN, dS under ML.</li>
+</ol>
 <div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio</span> <span class="kn">import</span> <span class="n">SeqIO</span><span class="p">,</span> <span class="n">AlignIO</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio</span> <span class="kn">import</span> <span class="n">CodonAlign</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.Data.CodonTable</span> <span class="kn">import</span> <span class="n">generic_by_id</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.Alphabet</span> <span class="kn">import</span> <span class="n">IUPAC</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.CodonAlign</span> <span class="kn">import</span> <span class="n">build</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.CodonAlign.CodonAlignment</span> <span class="kn">import</span> <span class="n">mktest</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">Bio.CodonAlign.CodonSeq</span> <span class="kn">import</span> <span class="n">cal_dn_ds</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pro_aln</span> <span class="o">=</span> <span class="n">AlignIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;adh.aln&#39;</span><span class="p">,</span> <span class="s">&#39;clustal&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s">&#39;drosophilla.fasta&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">aln</span> <span class="o">=</span> <span class="n">AlignIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;pro.aln&#39;</span><span class="p">,</span> <span class="s">&#39;clustal&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">seq1</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;rbcL_cucu_mRNA.fa&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">seq2</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;rbcL_nic_mRNA.fa&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="n">codon_aln</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">pro_aln</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">codon_aln</span>
-<span class="n">CodonAlphabet</span><span class="p">(</span><span class="n">Standard</span><span class="p">)</span> <span class="n">CodonAlignment</span> <span class="k">with</span> <span class="mi">27</span> <span class="n">rows</span> <span class="ow">and</span> <span class="mi">768</span> <span class="n">columns</span> <span class="p">(</span><span class="mi">256</span> <span class="n">codons</span><span class="p">)</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9217</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57365</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9219</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57366</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9221</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57367</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9223</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57368</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9225</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57369</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9227</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57370</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9229</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57371</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9231</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57372</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9233</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57373</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9235</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57374</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9237</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57375</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACCTTGACCAACAAGAACGTGGTTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9239</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57376</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9097</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57361</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9099</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57362</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9101</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57363</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGGCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATC</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">9103</span><span class="o">|</span><span class="n">emb</span><span class="o">|</span><span class="n">X57364</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156879</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17837</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCK</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156877</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17836</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCJ</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156875</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17835</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCI</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156873</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17834</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCH</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156871</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17833</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCG</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156863</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M19547</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCC</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156869</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17832</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCF</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTGGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156867</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17831</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCE</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156865</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17830</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCD</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156861</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17828</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCB</span>
-<span class="n">ATGTCGTTTACTTTGACCAACAAGAACGTGATTTTCGTTGCCGGTCTGGGAGGCATT</span><span class="o">...</span><span class="n">ATC</span> <span class="n">gi</span><span class="o">|</span><span class="mi">156859</span><span class="o">|</span><span class="n">gb</span><span class="o">|</span><span class="n">M17827</span><span class="o">.</span><span class="mi">1</span><span class="o">|</span><span class="n">DROADHCA</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">mktest</span><span class="p">([</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">12</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">16</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">16</span><span class="p">:]])</span>
-<span class="mf">0.00206457257254</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">codon_aln</span> <span class="o">=</span> <span class="n">CodonAlign</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">aln</span><span class="p">,</span> <span class="p">[</span><span class="n">seq1</span><span class="p">,</span> <span class="n">seq2</span><span class="p">],</span> <span class="n">codon_table</span><span class="o">=</span><span class="n">generic_by_id</span><span class="p">[</span><span class="mi">11</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span> <span class="o">=</span> <span class="n">cal_dn_ds</span><span class="p">(</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;ML&#39;</span><span class="p">,</span> <span class="n">cfreq</span><span class="o">=</span><span class="s">&#39;F1x4&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span>
+<span class="mf">0.0345408062877</span> <span class="mf">0.314510886694</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span> <span class="o">=</span> <span class="n">cal_dn_ds</span><span class="p">(</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;ML&#39;</span><span class="p">,</span> <span class="n">cfreq</span><span class="o">=</span><span class="s">&#39;F3x4&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span>
+<span class="mf">0.0342472820368</span> <span class="mf">0.420673537297</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span> <span class="o">=</span> <span class="n">cal_dn_ds</span><span class="p">(</span><span class="n">codon_aln</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">codon_aln</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;ML&#39;</span><span class="p">,</span> <span class="n">cfreq</span><span class="o">=</span><span class="s">&#39;F61&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">dN</span><span class="p">,</span> <span class="n">dS</span>
+<span class="mf">0.0355901166208</span> <span class="mf">0.44417445805</span>
 </pre></div>
-<p>The mktest didn't output much in the screen (only the p-value). I will modify this to be
-more user friendly. The count for fixed/poly synonymous/nonsynonymous substitutions is
-[18.0, 7.0, 39.0, 1.0]. Compared with McDonald-Kreitman's result -- [17.0, 7.0, 42.0, 2.0],
-it is rather similar.</p>
+<p>By default, ML method will use F3x4 to estimate dN and dS.</p>
+<ol class="arabic simple" start="2">
+<li>Estimating dN and dS trees from Codon Alignment.</li>
+</ol>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">pro_aln</span> <span class="o">=</span> <span class="n">AlignIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;adh.aln&#39;</span><span class="p">,</span> <span class="s">&#39;clustal&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">protein</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s">&#39;drosophilla.fasta&#39;</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">,</span> <span class="n">alphabet</span><span class="o">=</span><span class="n">IUPAC</span><span class="o">.</span><span class="n">IUPACUnambiguousDNA</span><span class="p">())</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">codon_aln</span> <span class="o">=</span> <span class="n">CodonAlign</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">pro_aln</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">dn_tree</span><span class="p">,</span> <span class="n">ds_tree</span> <span class="o">=</span> <span class="n">codon_aln</span><span class="o">.</span><span class="n">get_dn_ds_tree</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">ds_tree</span>
+<span class="n">Tree</span><span class="p">(</span><span class="n">rooted</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner26&#39;</span><span class="p">)</span>
+        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0660961902035</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner25&#39;</span><span class="p">)</span>
+            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0241865617789</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner24&#39;</span><span class="p">)</span>
+                <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0215192393847</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner10&#39;</span><span class="p">)</span>
+                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00264551361746</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156859|gb|M17827.1|DROADHCA&#39;</span><span class="p">)</span>
+                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00264551361746</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156861|gb|M17828.1|DROADHCB&#39;</span><span class="p">)</span>
+                <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0148698333559</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner21&#39;</span><span class="p">)</span>
+                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00876665519004</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner14&#39;</span><span class="p">)</span>
+                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00529109306862</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156867|gb|M17831.1|DROADHCE&#39;</span><span class="p">)</span>
+                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00529109306862</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner1&#39;</span><span class="p">)</span>
+                            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156865|gb|M17830.1|DROADHCD&#39;</span><span class="p">)</span>
+                            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156863|gb|M19547.1|DROADHCC&#39;</span><span class="p">)</span>
+                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00476282861245</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner16&#39;</span><span class="p">)</span>
+                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00929491964622</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156869|gb|M17832.1|DROADHCF&#39;</span><span class="p">)</span>
+                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00666793867556</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner9&#39;</span><span class="p">)</span>
+                            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00262698097065</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner4&#39;</span><span class="p">)</span>
+                                <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner3&#39;</span><span class="p">)</span>
+                                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner2&#39;</span><span class="p">)</span>
+                                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156871|gb|M17833.1|DROADHCG&#39;</span><span class="p">)</span>
+                                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156873|gb|M17834.1|DROADHCH&#39;</span><span class="p">)</span>
+                                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156875|gb|M17835.1|DROADHCI&#39;</span><span class="p">)</span>
+                                <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156877|gb|M17836.1|DROADHCJ&#39;</span><span class="p">)</span>
+                            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00262698097065</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|156879|gb|M17837.1|DROADHCK&#39;</span><span class="p">)</span>
+            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0201467326198</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner20&#39;</span><span class="p">)</span>
+                <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0133347488053</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9099|emb|X57362.1|&#39;</span><span class="p">)</span>
+                <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00269573738188</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner18&#39;</span><span class="p">)</span>
+                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00536651683534</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner13&#39;</span><span class="p">)</span>
+                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00527249458811</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9103|emb|X57364.1|&#39;</span><span class="p">)</span>
+                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00527249458811</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9101|emb|X57363.1|&#39;</span><span class="p">)</span>
+                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0106390114235</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9097|emb|X57361.1|&#39;</span><span class="p">)</span>
+        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0567366494521</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner23&#39;</span><span class="p">)</span>
+            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0226942895568</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9225|emb|X57369.1|&#39;</span><span class="p">)</span>
+            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00580291490159</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner22&#39;</span><span class="p">)</span>
+                <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0168913746552</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9221|emb|X57367.1|&#39;</span><span class="p">)</span>
+                <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00695492026446</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner19&#39;</span><span class="p">)</span>
+                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00568075968879</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner12&#39;</span><span class="p">)</span>
+                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner11&#39;</span><span class="p">)</span>
+                            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00526324429364</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9239|emb|X57376.1|&#39;</span><span class="p">)</span>
+                            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00526324429364</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9237|emb|X57375.1|&#39;</span><span class="p">)</span>
+                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00526324429364</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9233|emb|X57373.1|&#39;</span><span class="p">)</span>
+                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00100754959171</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner17&#39;</span><span class="p">)</span>
+                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00993645439073</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9227|emb|X57370.1|&#39;</span><span class="p">)</span>
+                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00333761625244</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner15&#39;</span><span class="p">)</span>
+                            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00659883813828</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9231|emb|X57372.1|&#39;</span><span class="p">)</span>
+                            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00397644982917</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner8&#39;</span><span class="p">)</span>
+                                <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00262238830911</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9235|emb|X57374.1|&#39;</span><span class="p">)</span>
+                                <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.00262238830911</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner7&#39;</span><span class="p">)</span>
+                                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner6&#39;</span><span class="p">)</span>
+                                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Inner5&#39;</span><span class="p">)</span>
+                                            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9229|emb|X57371.1|&#39;</span><span class="p">)</span>
+                                            <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9223|emb|X57368.1|&#39;</span><span class="p">)</span>
+                                        <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9219|emb|X57366.1|&#39;</span><span class="p">)</span>
+                                    <span class="n">Clade</span><span class="p">(</span><span class="n">branch_length</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;gi|9217|emb|X57365.1|&#39;</span><span class="p">)</span>
+</pre></div>
 </div>
 <div class="section" id="future-plan">
 <h2>Future Plan</h2>
 <ol class="arabic simple">
-<li>Add more options for ML method (allow different substitution model);</li>
-<li>Tree estimation using dN, dS distance;</li>
-<li>Documentation.</li>
+<li>Write Documentation and Test.</li>
 </ol>
 <p>For more info, please visit my
 [CodonAlign github repo](<a class="reference external" href="https://github.com/zruan/biopython/tree/master/Bio/CodonAlign">https://github.com/zruan/biopython/tree/master/Bio/CodonAlign</a>)</p>
 </div>
-<p>There are <a href="/9th-diary.html#disqus_thread">comments</a>.</p>                </article>
+<p>There are <a href="/10th-diary.html#disqus_thread">comments</a>.</p>                </article>
                             </aside><!-- /#featured -->
                             <section id="content" class="body">
                     <h1>Other articles</h1>
                     <hr />
                     <ol id="posts-list" class="hfeed">
                                                         
+
+                 
+                        <li><article class="hentry">    
+                <header>
+                        <h1><a href="/9th-diary.html" rel="bookmark" title="Permalink to 9th Diary">9th Diary</a></h1>
+                </header>
+                
+                <div class="entry-content">
+                <footer class="post-info">
+        <abbr class="published" title="2013-09-09T21:43:00">
+                Mon 09 September 2013
+        </abbr>
+
+                <address class="vcard author">
+                By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
+        </address>
+        <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
+<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info -->                <p class="first last">McDonald-Kreitman test implementation</p>
+
+                <a class="readmore" href="/9th-diary.html">read more</a>
+                <p>There are <a href="/9th-diary.html#disqus_thread">comments</a>.</p>                </div><!-- /.entry-content -->
+            </article></li>
+                                    
 
                  
                         <li><article class="hentry">    
@@ -321,29 +381,6 @@ timeline, which I will still generally follow. It can be found at
 Hope ...</p>
                 <a class="readmore" href="/project-timeline.html">read more</a>
                 <p>There are <a href="/project-timeline.html#disqus_thread">comments</a>.</p>                </div><!-- /.entry-content -->
-            </article></li>
-                                    
-
-                 
-                        <li><article class="hentry">    
-                <header>
-                        <h1><a href="/1st-diary.html" rel="bookmark" title="Permalink to 1st Diary">1st Diary</a></h1>
-                </header>
-                
-                <div class="entry-content">
-                <footer class="post-info">
-        <abbr class="published" title="2013-06-20T14:32:00">
-                Thu 20 June 2013
-        </abbr>
-
-                <address class="vcard author">
-                By <a class="url fn" href="/author/zheng-ruan.html">Zheng Ruan</a>
-        </address>
-        <p>In <a href="/category/gsoc.html">GSoC</a>. </p>
-<p>tags: <a href="/tag/codon-alignment.html">Codon Alignment</a><a href="/tag/gsoc.html">GSoC</a></p></footer><!-- /.post-info -->                <p class="first last">CodonAlignment class setup and simple build function to construct codon alignment</p>
-
-                <a class="readmore" href="/1st-diary.html">read more</a>
-                <p>There are <a href="/1st-diary.html#disqus_thread">comments</a>.</p>                </div><!-- /.entry-content -->
             </article></li>
                             <p class="paginator">
         Page 1 / 2
