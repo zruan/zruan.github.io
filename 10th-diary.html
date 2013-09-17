@@ -56,13 +56,13 @@ by using Yanbo Ye's Code (specifically, <tt class="docutils literal">DistanceMat
 <tt class="docutils literal">DistanceTreeConstructor</tt> classes). This method is implemented in
 <tt class="docutils literal">CodonAlignment</tt> class so that user can build a dN tree and dS tree once it
 get the alignment. Furthermore, I corrected all the things Eric pointed out in
-my code several days ago. <tt class="docutils literal">toCodonAlignment</tt> is now a classmethod for
-called <tt class="docutils literal">from_msa</tt> in <tt class="docutils literal">CodonAlignment</tt> class, rather than an independent
-function. I also speed up
+my code several days ago. <tt class="docutils literal">toCodonAlignment</tt> is now a classmethod called
+<tt class="docutils literal">from_msa</tt> in <tt class="docutils literal">CodonAlignment</tt> class, rather than an independent function.
+I also speed up
 the Mcdonald Kreitman test implementation by breaking the _dijkstra() once it
 arrives at the target codon. However, I think I can make it even faster by
 building codon to codon substitution matrix on the fly (I may do this after my
-GSoC). In addition, I removes the Scipy dependency by using the <tt class="docutils literal">chisq.py</tt>
+GSoC). In addition, I removed the Scipy dependency by using the <tt class="docutils literal">chisq.py</tt>
 from Eric's biofrills/stats/. When the convergency problem in
 Phylo/PAML/chi2.py is solved, I may shift it back to Biopython's chi2
 implementation. I also re-organized the <tt class="docutils literal">cal_dn_ds</tt> method so that it is more
